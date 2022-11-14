@@ -1,0 +1,21 @@
+autogen_warning = "/* THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT EDIT. */"
+include_guard = "_NOVELPOLY_REED_SOLOMON_CRUST_INCLUDE_GUARD_H_"
+include_version = true
+line_length = 80
+tab_width = 2
+language = "C"
+style = "Both"
+documentation_style = "Doxy"
+
+[fn]
+args = "Vertical"
+
+[struct]
+# A rule to use to rename field names
+rename_fields = "SnakeCase"
+
+[enum]
+rename_variants = "QualifiedScreamingSnakeCase"
+
+[parse.expand]
+features = ["cbindgen"]
