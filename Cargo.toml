@@ -1,0 +1,20 @@
+[package]
+name = "erasure-coding-crust"
+version = "0.2.0"
+authors = ["Alexander Lednev <iceseer@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+[lib]
+name = "erasure_coding_crust"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+novelpoly = { package = "reed-solomon-novelpoly", version = "1.0.0" }
+
+[dev-dependencies]
+hex-literal = "0.3.1"
+rand = "0.7"
+
+[build-dependencies]
+cbindgen = "0.14.0"
