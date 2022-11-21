@@ -12,6 +12,7 @@
 #![allow(unused_variables)]
 #![allow(non_snake_case)]
 #![warn(future_incompatible)]
+#![feature(proc_macro_is_available)]
 
 //!
 //! Glue code to generate C headers for Novel Polynomial Basis and Its Application to Reed-Solomon Erasure Codes
