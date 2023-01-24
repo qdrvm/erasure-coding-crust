@@ -6,6 +6,7 @@ tab_width = 2
 language = "C"
 style = "Both"
 documentation_style = "Doxy"
+cpp_compat = true
 
 [fn]
 args = "Vertical"
