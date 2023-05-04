@@ -7,6 +7,7 @@
 
 #include "../ec-cpp/ec-cpp.hpp"
 #include "../../ec-cpp/f2e16.hpp"
+#include "../../ec-cpp/table_f2e16.hpp"
 
 extern "C" {
 #include <erasure_coding/erasure_coding.h>
@@ -41,7 +42,22 @@ TEST(erasure_coding, Cpp_MathNextLowPow2) {
 
 TEST(erasure_coding, Cpp_Polyf2e16) {
     ec_cpp::PolyEncoder_f2e16 poly;
-    int p = 0; ++p;
+    auto &[log_table, exp_table, walsh_table] = poly.kTables;
+
+    ASSERT_EQ(log_table.size(), sizeof(LOG_TABLE) / sizeof(LOG_TABLE[0]));
+    for (size_t i = 0; i < log_table.size(); ++i) {
+        ASSERT_EQ(log_table[i], LOG_TABLE[i]);
+    }
+
+    ASSERT_EQ(exp_table.size(), sizeof(EXP_TABLE) / sizeof(EXP_TABLE[0]));
+    for (size_t i = 0; i < exp_table.size(); ++i) {
+        ASSERT_EQ(exp_table[i], EXP_TABLE[i]);
+    }
+
+    ASSERT_EQ(walsh_table.size(), sizeof(LOG_WALSH) / sizeof(LOG_WALSH[0]));
+    for (size_t i = 0; i < walsh_table.size(); ++i) {
+        ASSERT_EQ(walsh_table[i], LOG_WALSH[i]);
+    }
 }
 
 TEST(erasure_coding, Cpp_CreateChunks) {
