@@ -31,7 +31,7 @@ if (NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif ()
 
-
+add_subdirectory(ec-cpp)
 if (TESTING)
   enable_testing()
   add_subdirectory(test)

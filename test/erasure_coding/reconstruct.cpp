@@ -5,6 +5,9 @@
 
 #include <gtest/gtest.h>
 
+#include "../ec-cpp/ec-cpp.hpp"
+#include "../../ec-cpp/f2e16.hpp"
+
 extern "C" {
 #include <erasure_coding/erasure_coding.h>
 }
@@ -18,6 +21,31 @@ auto createTestChunks(ChunksList &out, uint64_t validators = n_validators) {
   DataBlock data{.array = (uint8_t *)test_data.data(),
                  .length = test_data.length()};
   return ECCR_obtain_chunks(validators, &data, &out);
+}
+
+TEST(erasure_coding, Cpp_MathNextHighPow2) {
+    ASSERT_EQ(1ull, ec_cpp::math::nextHighPowerOf2(0ull));
+    ASSERT_EQ(4ull, ec_cpp::math::nextHighPowerOf2(4ull));
+    ASSERT_EQ(8ull, ec_cpp::math::nextHighPowerOf2(5ull));
+    ASSERT_EQ(8ull, ec_cpp::math::nextHighPowerOf2(7ull));
+    ASSERT_EQ(8ull, ec_cpp::math::nextHighPowerOf2(8ull));
+}
+
+TEST(erasure_coding, Cpp_MathNextLowPow2) {
+    ASSERT_EQ(1ull, ec_cpp::math::nextLowPowerOf2(0ull));
+    ASSERT_EQ(4ull, ec_cpp::math::nextLowPowerOf2(4ull));
+    ASSERT_EQ(4ull, ec_cpp::math::nextLowPowerOf2(5ull));
+    ASSERT_EQ(4ull, ec_cpp::math::nextLowPowerOf2(7ull));
+    ASSERT_EQ(8ull, ec_cpp::math::nextLowPowerOf2(8ull));
+}
+
+TEST(erasure_coding, Cpp_Polyf2e16) {
+    ec_cpp::PolyEncoder_f2e16 poly;
+    int p = 0; ++p;
+}
+
+TEST(erasure_coding, Cpp_CreateChunks) {
+    ec_cpp::create();
 }
 
 TEST(erasure_coding, CreateChunks) {

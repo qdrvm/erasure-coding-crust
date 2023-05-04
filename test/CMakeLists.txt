@@ -10,4 +10,5 @@ erasure_coding_add_test(ec_test
     )
 target_link_libraries(ec_test
     erasure_coding_crust
+    ec-cpp
     )
