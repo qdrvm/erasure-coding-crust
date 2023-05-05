@@ -123,7 +123,7 @@ pub unsafe extern "C" fn ECCR_get_recovery_threshold(
 pub unsafe extern "C" fn ECCR_deallocate_data_block(data: *mut DataBlock) {
     debug_assert!(!data.is_null());
     debug_assert!(!(*data).array.is_null());
-    Box::from_raw((*data).array);
+    drop(Box::from_raw((*data).array));
 }
 
 /// Cleans the data in chunk
@@ -147,7 +147,7 @@ pub unsafe extern "C" fn ECCR_deallocate_chunk_list(chunk_list: *mut ChunksList)
             ECCR_deallocate_chunk(chunk);
         }
     }
-    Box::from_raw(data.data);
+    drop(Box::from_raw(data.data));
 }
 
 /// Obtain erasure-coded chunks, one for each validator.

@@ -14,6 +14,7 @@ namespace ec_cpp {
         kWantedShardCountTooLow,
         kWantedShardCountTooHigh,
         kWantedPayloadShardCountTooLow,
+        kPayloadSizeIsZero,
     };
 
     template<typename T>
