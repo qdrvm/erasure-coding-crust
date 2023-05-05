@@ -10,9 +10,11 @@
 #include <array>
 #include <tuple>
 #include <vector>
+#include <assert.h>
 
 #include "types.hpp"
 #include "errors.hpp"
+#include "math.hpp"
 
 namespace ec_cpp {
 
@@ -128,11 +130,27 @@ namespace ec_cpp {
         };
 
         Result<std::vector<Additive>> encodeSub(Slice<uint8_t> bytes, size_t n, size_t k) {
-            /*assert!(is_power_of_2(n), "Algorithm only works for 2^i sizes for N");
-            assert!(is_power_of_2(k), "Algorithm only works for 2^i sizes for K");
-            assert!(bytes.len() <= k << 1);
-            assert!(k <= n / 2);*/
-            return Error::kArgsMustBePowOf2;
+            assert(math::isPowerOf2(n));
+            assert(math::isPowerOf2(k));
+            assert(bytes.size() <= (k << 1));
+            assert(k <= n / 2);
+
+            const auto dl = bytes.size();
+
+            const auto l = [dl] {
+                if (math::isPowerOf2(dl))
+                    return dl;
+                else {
+                    const size_t l = (1ull << math::log2(dl));
+                    if (l >= dl)
+                        return l; 
+                    return (l << 1ull);
+                }
+            }();
+            assert(math::isPowerOf2(l));
+            assert(l >= dl);
+
+            
         }
     };
 

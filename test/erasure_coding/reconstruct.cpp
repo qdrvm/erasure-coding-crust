@@ -18,6 +18,15 @@ static constexpr std::string_view test_data =
     "conquer the world!";
 static constexpr uint64_t n_validators = 6ull;
 
+inline size_t Prototype_log2(size_t x) {
+    size_t o = 0ull;
+    while (x > 1) {
+        x = (x >> 1);
+        o += 1;
+    }
+    return o;
+}
+
 auto createTestChunks(ChunksList &out, uint64_t validators = n_validators) {
   DataBlock data{.array = (uint8_t *)test_data.data(),
                  .length = test_data.length()};
@@ -58,6 +67,11 @@ TEST(erasure_coding, Cpp_Polyf2e16) {
     for (size_t i = 0; i < walsh_table.size(); ++i) {
         ASSERT_EQ(walsh_table[i], LOG_WALSH[i]);
     }
+}
+
+TEST(erasure_coding, Cpp_Math_Log2) {
+  for (size_t i = 0ull; i < 1000ull; ++i)
+    ASSERT_EQ(Prototype_log2(i), ec_cpp::math::log2(i));
 }
 
 TEST(erasure_coding, Cpp_CreateChunks) {
