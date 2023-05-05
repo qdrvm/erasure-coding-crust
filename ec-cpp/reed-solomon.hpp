@@ -8,17 +8,17 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <vector>
-#include <string_view>
+#include <cstdint>
 
 #include "math.hpp"
 #include "errors.hpp"
+#include "types.hpp"
 
 namespace ec_cpp {
 
     template<typename PolyEncoder>
     struct ReedSolomon final {
         using Shard = std::vector<uint8_t>;
-        using Slice = std::basic_string_view<uint8_t>;
 
         static Result<ReedSolomon> create(size_t n, size_t k, PolyEncoder &&poly_enc) {
             if (n < 2) {
@@ -49,7 +49,7 @@ namespace ec_cpp {
             return shard_bytes;
         }
 
-        Result<std::vector<Shard>> encode(const Slice bytes) {
+        Result<std::vector<Shard>> encode(const Slice<uint8_t> bytes) {
             if (bytes.empty())
                 return Error::kPayloadSizeIsZero;
 
@@ -69,7 +69,7 @@ namespace ec_cpp {
                 const auto end = std::min(i + k2, bytes.size());
                 assert(i != end);
 
-                Slice data_piece(&bytes[i], bytes.end());
+                Slice<uint8_t> data_piece(&bytes[i], bytes.end());
                 assert(!data_piece.empty());
                 assert(data_piece.size() <= k2);
 

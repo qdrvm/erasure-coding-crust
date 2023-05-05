@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <array>
 #include <tuple>
+#include <vector>
+
+#include "types.hpp"
+#include "errors.hpp"
 
 namespace ec_cpp {
 
@@ -99,21 +103,37 @@ namespace ec_cpp {
         }();
 
         struct Additive {
-            f2e16_Descriptor::Elt _0;
+            Descriptor::Elt _0;
 
-            /*Multiplier toMultiplier(const Tables &tables) {
-                const auto &[log_table, _1, _2] = tables;
-                return Multiplier(log_table[size_t(_0)]);
-            }*/
+            Descriptor::Multiplier toMultiplier(const Tables &tables) {
+                const auto &log_table = std::get<0>(tables);
+                return Descriptor::Multiplier(log_table[size_t(_0)]);
+            }
+
+            Additive mul(Descriptor::Multiplier other, const Tables &tables) {
+                if (_0 == Descriptor::Elt(0))
+                    return Additive{0};
+                
+                const auto &[log_table, exp_table, _] = tables;
+                const auto log = (Descriptor::Wide(log_table[size_t(_0)])) + Descriptor::Wide(other);
+                const auto offset = (log & Descriptor::Wide(Descriptor::kOneMask)) + (log >> Descriptor::kFieldBits);
+                return Additive{exp_table[size_t(offset)]};
+            }
+
+            void mulAssignSlice(Additive *selfy, size_t count, Descriptor::Multiplier other, const Tables &tables) {
+                for (size_t ix = 0ull; ix < count; ++ix)
+                    selfy[ix] = selfy[ix].mul(other, tables);
+            }
 
         };
 
-        /*pub fn encode_sub(bytes: &[u8], n: usize, k: usize) -> Result<Vec<Additive>> {
-            assert!(is_power_of_2(n), "Algorithm only works for 2^i sizes for N");
+        Result<std::vector<Additive>> encodeSub(Slice<uint8_t> bytes, size_t n, size_t k) {
+            /*assert!(is_power_of_2(n), "Algorithm only works for 2^i sizes for N");
             assert!(is_power_of_2(k), "Algorithm only works for 2^i sizes for K");
             assert!(bytes.len() <= k << 1);
-            assert!(k <= n / 2);
-        }*/
+            assert!(k <= n / 2);*/
+            return Error::kArgsMustBePowOf2;
+        }
     };
 
 }
