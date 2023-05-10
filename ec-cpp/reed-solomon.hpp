@@ -73,8 +73,16 @@ namespace ec_cpp {
                 assert(!data_piece.empty());
                 assert(data_piece.size() <= k2);
 
-                /*let encoding_run = f2e16::encode_sub(data_piece, n_, k_)?;
-                for val_idx in 0..validator_count {
+                auto result = poly_enc_.encodeSub(data_piece, n_, k_);
+                if (resultHasError(result)) {
+                    return resultGetError(std::move(result));
+                }
+                auto encoding_run = resultGetValue(std::move(result));
+                for (size_t val_idx = 0ull; val_idx < validator_count; ++val_idx) {
+                    /// TODO
+                    //encoding_run[val_idx]._0.
+                }
+                /*for val_idx in 0..validator_count {
                     AsMut::<[[u8; 2]]>::as_mut(&mut shards[val_idx])[chunk_idx] = encoding_run[val_idx].0.to_be_bytes();
                 }*/
             }

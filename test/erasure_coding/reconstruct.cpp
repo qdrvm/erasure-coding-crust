@@ -33,6 +33,17 @@ auto createTestChunks(ChunksList &out, uint64_t validators = n_validators) {
   return ECCR_obtain_chunks(validators, &data, &out);
 }
 
+TEST(erasure_coding, Cpp_AFFT_tables) {
+    ec_cpp::PolyEncoder_f2e16 init{};
+    auto src_1 = ec_cpp::PolyEncoder_f2e16::AdditiveFFT::initalize(init.kTables);
+    int p = 0; ++p;
+}
+
+TEST(erasure_coding, Cpp_EltBEEncode) {
+    uint8_t a_0[] = {0x11, 0x22};
+    ASSERT_EQ(0x1122, ec_cpp::f2e16_Descriptor::fromBEBytes(a_0));
+}
+
 TEST(erasure_coding, Cpp_MathNextHighPow2) {
     ASSERT_EQ(1ull, ec_cpp::math::nextHighPowerOf2(0ull));
     ASSERT_EQ(4ull, ec_cpp::math::nextHighPowerOf2(4ull));
