@@ -1,3 +1,4 @@
+use novelpoly::f2e16::AFFT;
 use novelpoly::{CodeParams, WrappedShard};
 use std::os::raw::c_ulong;
 use std::slice;
@@ -150,6 +151,21 @@ pub unsafe extern "C" fn ECCR_deallocate_chunk_list(chunk_list: *mut ChunksList)
     drop(Box::from_raw(data.data));
 }
 
+#[allow(unused_attributes)]
+#[no_mangle]
+pub unsafe extern "C" fn ECCR_AFFT_Table(
+    output: *mut [u16; 65535],
+) -> NPRSResult {
+    let f = &AFFT;
+    let mut qqq = f.skews.clone();
+
+    assert_eq!(65535 as usize, qqq.len());
+    let mut s = std::mem::transmute::<&mut [novelpoly::f2e16::Multiplier; 65535], *mut [u16; 65535]>(&mut qqq);
+
+    *output = *s;
+    NPRSResult::Ok
+}
+
 /// Obtain erasure-coded chunks, one for each validator.
 ///
 /// Works only up to 65536 validators, and `n_validators` must be non-zero.
@@ -171,6 +187,10 @@ pub unsafe extern "C" fn ECCR_obtain_chunks(
         Ok(p) => p,
         Err(e) => return e,
     };
+
+    let f = &AFFT;
+    println!("{:?}", f.skews);
+    let qqq = f.skews.clone();
 
     let shards = params
         .make_encoder()
