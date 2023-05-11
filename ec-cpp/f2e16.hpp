@@ -35,6 +35,11 @@ namespace ec_cpp {
         static Elt fromBEBytes(const uint8_t *data) {
             return Elt(Elt(Elt(*data) << 8) | Elt(*(data + 1)));
         }
+
+        static void toBEBytes(uint8_t *dst, Elt src) {
+            dst[0] = (src >> 8ull);
+            dst[1] = (src & 0xff);
+        }
     };
 
     template<typename TDescriptor>

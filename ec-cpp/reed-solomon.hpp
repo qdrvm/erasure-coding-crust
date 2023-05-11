@@ -42,13 +42,6 @@ namespace ec_cpp {
             return ReedSolomon{n_po2, k_po2, n, std::move(poly_enc)};
         }
 
-        size_t shardLen(size_t payload_size) {
-            const auto payload_symbols = (payload_size + 1) / 2;
-            const auto shard_symbols_ceil = (payload_symbols + k_ - 1) / k_;
-            const auto shard_bytes = shard_symbols_ceil * 2;
-            return shard_bytes;
-        }
-
         Result<std::vector<Shard>> encode(const Slice<uint8_t> bytes) {
             if (bytes.empty())
                 return Error::kPayloadSizeIsZero;
@@ -69,7 +62,7 @@ namespace ec_cpp {
                 const auto end = std::min(i + k2, bytes.size());
                 assert(i != end);
 
-                Slice<uint8_t> data_piece(&bytes[i], bytes.end());
+                Slice<uint8_t> data_piece(&bytes[i], &bytes[end]);
                 assert(!data_piece.empty());
                 assert(data_piece.size() <= k2);
 
@@ -79,12 +72,10 @@ namespace ec_cpp {
                 }
                 auto encoding_run = resultGetValue(std::move(result));
                 for (size_t val_idx = 0ull; val_idx < validator_count; ++val_idx) {
-                    /// TODO
-                    //encoding_run[val_idx]._0.
+                    auto &shard = shards[val_idx];
+                    const auto src = encoding_run[val_idx]._0;
+                    PolyEncoder::Descriptor::toBEBytes((uint8_t*)&shard[chunk_idx * 2ull], src);
                 }
-                /*for val_idx in 0..validator_count {
-                    AsMut::<[[u8; 2]]>::as_mut(&mut shards[val_idx])[chunk_idx] = encoding_run[val_idx].0.to_be_bytes();
-                }*/
             }
     		return shards;
         }
@@ -92,6 +83,13 @@ namespace ec_cpp {
     private:
         ReedSolomon(size_t n, size_t k, size_t wanted_n, PolyEncoder &&poly_enc)
                 : n_(n), k_(k), wanted_n_(wanted_n), poly_enc_(std::move(poly_enc)) { }
+
+        size_t shardLen(size_t payload_size) {
+            const auto payload_symbols = (payload_size + 1) / 2;
+            const auto shard_symbols_ceil = (payload_symbols + k_ - 1) / k_;
+            const auto shard_bytes = shard_symbols_ceil * 2;
+            return shard_bytes;
+        }
 
         const size_t n_;
         const size_t k_;

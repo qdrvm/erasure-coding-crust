@@ -32,6 +32,16 @@ namespace ec_cpp::math {
         return (1ull << p);
     }
 
+    template <typename T>
+    inline constexpr T sat_sub_unsigned(T x, T y) {
+        static_assert(std::numeric_limits<T>::is_integer
+                      && !std::numeric_limits<T>::is_signed,
+                      "Value must be integer and unsigned!");
+        auto res = x - y;
+        res &= -(res <= x);
+        return res;
+    }
+
 }
 
 #endif //NOVELPOLY_REED_SOLOMON_CRUST_MATH_HPP
