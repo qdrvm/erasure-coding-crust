@@ -189,6 +189,44 @@ namespace ec_cpp {
                 }
                 return result;
             }
+
+            void inverse_afft(Additive *data, size_t size, size_t index, const Tables &tables) {
+                size_t depart_no(1ull);
+                while (depart_no < size) {
+                    size_t j(depart_no);
+                    while (j < size) {
+                        for (size_t i = (j - depart_no); i < j; ++i)
+                            data[i + depart_no]._0 = (data[i + depart_no]._0 ^ data[i]._0);
+
+                        const auto skew = skews[j + index - 1ull];
+                        if (skew != Descriptor::kOneMask)
+                            for (size_t i = (j - depart_no); i < j; ++i)
+                                data[i]._0 = (data[i]._0 ^ data[i + depart_no].mul(skew, tables)._0);
+
+                        j += (depart_no << 1ull);
+                    }
+                    depart_no = (depart_no << 1ull);
+                }
+            }
+
+            void afft(Additive *data, size_t size, size_t index, const Tables &tables) {
+                size_t depart_no(size >> 1ull);
+                while (depart_no > 0) {
+                    size_t j(depart_no);
+                    while (j < size) {
+                        const auto skew = skews[j + index - 1ull];
+                        if (skew != Descriptor::kOneMask)
+                            for (size_t i = (j - depart_no); i < j; ++i)
+                                data[i]._0 = data[i]._0 ^ data[i + depart_no].mul(skew, tables)._0;
+
+                        for (size_t i = (j - depart_no); i < j; ++i)
+                            data[i + depart_no]._0 = data[i + depart_no]._0 ^ data[i]._0;
+
+                        j += (depart_no << 1ull);
+                    }
+                    depart_no = (depart_no >> 1ull);
+                }
+            }
         };
 
         Result<std::vector<Additive>> encodeSub(Slice<uint8_t> bytes, size_t n, size_t k) {
@@ -224,7 +262,7 @@ namespace ec_cpp {
             }
             if (end != current) {
                 uint8_t b[sizeof(Descriptor::Elt)] = {0};
-                memcpy(b, current, end - current);
+                memcpy(b, current, (end - current) * sizeof(current[0]));
 
                 zero_bytes_to_add -= (sizeof(Descriptor::Elt) - size_t(end - current));
                 data.emplace_back(Additive{Descriptor::fromBEBytes(b)});
@@ -238,36 +276,37 @@ namespace ec_cpp {
             auto codeword = data;
             assert(codeword.size() == n);
 
-            encode_low(data, k, codeword, n);
+            encodeLow(data, k, codeword, n);
             return codeword;
         }
 
     private:
         AdditiveFFT AFFT {AdditiveFFT::initalize(kTables)};
 
-        void encode_low(const std::vector<Additive> &data, size_t k, std::vector<Additive> &codeword, size_t n) {
+        void encodeLow(const std::vector<Additive> &data, size_t k, std::vector<Additive> &codeword, size_t n) {
             assert(k + k <= n);
             assert(codeword.size() == n);
             assert(data.size() == n);
-
             assert(math::isPowerOf2(n));
             assert(math::isPowerOf2(k));
-
             assert((n / k) * k == n);
 
-            /// try to remove
+            /// TODO(iceseer): try to remove
             codeword.assign(data.begin(), data.end());
             auto *codeword_first_k = codeword.data();
             auto *codeword_skip_first_k = &codeword[k];
 
-            //inverse_afft(codeword_first_k, k, 0);
-            /// TODO
+            AFFT.inverse_afft(codeword_first_k, k, 0, kTables);
+            for (size_t shift = k; shift < n; shift += k) {
+                auto *codeword_at_shift = &codeword_skip_first_k[(shift - k)];
+                [[maybe_unused]] auto *codeword_at_shift_end = &codeword_skip_first_k[shift];
 
+                memcpy(codeword_at_shift, codeword_first_k, k * sizeof(codeword_first_k[0]));
+                AFFT.afft(codeword_at_shift, k, shift, kTables);
+            }
+
+            memcpy(&codeword[0], &data[0], k * sizeof(data[0]));
         }
-
-        /*pub fn inverse_afft(data: &mut [Additive], size: usize, index: usize) {
-            unsafe { &AFFT }.inverse_afft(data,size,index)
-        }*/
     };
 
 }

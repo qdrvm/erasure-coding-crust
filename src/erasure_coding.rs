@@ -151,16 +151,19 @@ pub unsafe extern "C" fn ECCR_deallocate_chunk_list(chunk_list: *mut ChunksList)
     drop(Box::from_raw(data.data));
 }
 
+/// Creates AFFT table and copies it to output..
+///
+/// Works only up to 65536 samples.
 #[allow(unused_attributes)]
 #[no_mangle]
 pub unsafe extern "C" fn ECCR_AFFT_Table(
     output: *mut [u16; 65535],
 ) -> NPRSResult {
     let f = &AFFT;
-    let mut qqq = f.skews.clone();
+    let qqq = f.skews.clone();
 
-    assert_eq!(65535 as usize, qqq.len());
-    let mut s = std::mem::transmute::<&mut [novelpoly::f2e16::Multiplier; 65535], *mut [u16; 65535]>(&mut qqq);
+    assert_eq!((*output).len(), qqq.len());
+    let s = std::mem::transmute::<&[novelpoly::f2e16::Multiplier; 65535], *const [u16; 65535]>(&qqq);
 
     *output = *s;
     NPRSResult::Ok
@@ -187,10 +190,6 @@ pub unsafe extern "C" fn ECCR_obtain_chunks(
         Ok(p) => p,
         Err(e) => return e,
     };
-
-    let f = &AFFT;
-    println!("{:?}", f.skews);
-    let qqq = f.skews.clone();
 
     let shards = params
         .make_encoder()
