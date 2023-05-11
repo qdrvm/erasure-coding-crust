@@ -233,8 +233,6 @@ private:
     assert(math::isPowerOf2(k));
     assert((n / k) * k == n);
 
-    /// TODO(iceseer): try to remove
-    codeword.assign(data.begin(), data.end());
     auto *codeword_first_k = codeword.data();
     auto *codeword_skip_first_k = &codeword[k];
 
