@@ -80,8 +80,9 @@ TEST(erasure_coding, Cpp_AFFT_tables) {
   uint16_t src_0[65535];
   ECCR_AFFT_Table(&src_0);
 
-  ec_cpp::PolyEncoder_f2e16 init{};
-  auto src_1 = ec_cpp::PolyEncoder_f2e16::AdditiveFFT::initalize(init.kTables);
+  ec_cpp::f2e16_Descriptor desc_;
+  ec_cpp::PolyEncoder_f2e16 init{desc_};
+  auto src_1 = ec_cpp::PolyEncoder_f2e16::AdditiveFFT::initalize(desc_.kTables);
 
   ASSERT_EQ(sizeof(src_0) / sizeof(src_0[0]),
             sizeof(src_1.skews) / sizeof(src_1.skews[0]));
@@ -112,8 +113,9 @@ TEST(erasure_coding, Cpp_MathNextLowPow2) {
 }
 
 TEST(erasure_coding, Cpp_Polyf2e16) {
-  ec_cpp::PolyEncoder_f2e16 poly;
-  auto &[log_table, exp_table, walsh_table] = poly.kTables;
+  ec_cpp::f2e16_Descriptor desc_;
+  ec_cpp::PolyEncoder_f2e16 poly{desc_};
+  auto &[log_table, exp_table, walsh_table] = desc_.kTables;
 
   ASSERT_EQ(log_table.size(), sizeof(LOG_TABLE) / sizeof(LOG_TABLE[0]));
   for (size_t i = 0; i < log_table.size(); ++i) {

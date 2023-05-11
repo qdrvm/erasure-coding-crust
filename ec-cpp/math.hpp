@@ -6,6 +6,7 @@
 #define NOVELPOLY_REED_SOLOMON_CRUST_MATH_HPP
 
 #include <assert.h>
+#include <limits>
 #include <stdlib.h>
 #include <type_traits>
 

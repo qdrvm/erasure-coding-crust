@@ -20,7 +20,7 @@ template <typename PolyEncoder> struct ReedSolomon final {
   using Shard = std::vector<uint8_t>;
 
   static Result<ReedSolomon> create(size_t n, size_t k,
-                                    PolyEncoder &&poly_enc) {
+                                    const PolyEncoder &poly_enc) {
     if (n < 2) {
       return Error::kWantedShardCountTooLow;
     }
@@ -39,7 +39,7 @@ template <typename PolyEncoder> struct ReedSolomon final {
     if (!math::isPowerOf2(n_po2) && !math::isPowerOf2(k_po2)) {
       return Error::kArgsMustBePowOf2;
     }
-    return ReedSolomon{n_po2, k_po2, n, std::move(poly_enc)};
+    return ReedSolomon{n_po2, k_po2, n, poly_enc};
   }
 
   Result<std::vector<Shard>> encode(const Slice<uint8_t> bytes) {
@@ -82,8 +82,8 @@ template <typename PolyEncoder> struct ReedSolomon final {
   }
 
 private:
-  ReedSolomon(size_t n, size_t k, size_t wanted_n, PolyEncoder &&poly_enc)
-      : n_(n), k_(k), wanted_n_(wanted_n), poly_enc_(std::move(poly_enc)) {}
+  ReedSolomon(size_t n, size_t k, size_t wanted_n, const PolyEncoder &poly_enc)
+      : n_(n), k_(k), wanted_n_(wanted_n), poly_enc_(poly_enc) {}
 
   size_t shardLen(size_t payload_size) {
     const auto payload_symbols = (payload_size + 1) / 2;
@@ -95,7 +95,7 @@ private:
   const size_t n_;
   const size_t k_;
   const size_t wanted_n_;
-  PolyEncoder poly_enc_;
+  const PolyEncoder &poly_enc_;
 };
 
 } // namespace ec_cpp
