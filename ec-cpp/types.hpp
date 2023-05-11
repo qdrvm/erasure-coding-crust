@@ -5,9 +5,9 @@
 
 namespace ec_cpp {
 
-    template<typename T>
-    using Slice = std::basic_string_view<std::remove_reference_t<T>>;
+template <typename T>
+using Slice = std::basic_string_view<std::remove_reference_t<T>>;
 
 }
 
-#endif//NOVELPOLY_REED_SOLOMON_CRUST_TYPES_HPP
+#endif // NOVELPOLY_REED_SOLOMON_CRUST_TYPES_HPP
