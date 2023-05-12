@@ -7,7 +7,7 @@
 namespace ec_cpp {
 
 f2e16_Descriptor field_descriptor;
-PolyEncoder<f2e16_Descriptor> poly_encoder(field_descriptor);
+PolyEncoder_f2e16 poly_encoder(field_descriptor);
 
 constexpr size_t kMaxValidators = f2e16_Descriptor::kFieldSize;
 
