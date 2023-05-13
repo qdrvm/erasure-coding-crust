@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <cstdint>
+#include <optional>
 #include <stdlib.h>
 #include <vector>
 
@@ -16,11 +17,11 @@
 
 namespace ec_cpp {
 
-template <typename PolyEncoder> struct ReedSolomon final {
+template <typename TPolyEncoder> struct ReedSolomon final {
   using Shard = std::vector<uint8_t>;
 
   static Result<ReedSolomon> create(size_t n, size_t k,
-                                    const PolyEncoder &poly_enc) {
+                                    const TPolyEncoder &poly_enc) {
     if (n < 2) {
       return Error::kWantedShardCountTooLow;
     }
@@ -32,7 +33,7 @@ template <typename PolyEncoder> struct ReedSolomon final {
     const auto n_po2 = math::nextHighPowerOf2(n);
     assert(n * k_po2 <= n_po2 * k);
 
-    if (n_po2 > PolyEncoder::Descriptor::kFieldSize) {
+    if (n_po2 > TPolyEncoder::Descriptor::kFieldSize) {
       return Error::kWantedShardCountTooHigh;
     }
 
@@ -74,15 +75,45 @@ template <typename PolyEncoder> struct ReedSolomon final {
       for (size_t val_idx = 0ull; val_idx < validator_count; ++val_idx) {
         auto &shard = shards[val_idx];
         const auto src = encoding_run[val_idx]._0;
-        PolyEncoder::Descriptor::toBEBytes((uint8_t *)&shard[chunk_idx * 2ull],
-                                           src);
+        TPolyEncoder::Descriptor::toBEBytes((uint8_t *)&shard[chunk_idx * 2ull],
+                                            src);
       }
     }
     return shards;
   }
 
+  Result<std::vector<uint8_t>>
+  reconstruct(std::vector<Shard> &received_shards) {
+    // const auto gap = math::sat_sub_unsigned(n_, received_shards.size());
+
+    size_t existential_count(0ull);
+    std::optional<size_t> first_shard_len;
+    for (size_t i = 0ull; i < std::min(n_, received_shards.size()); ++i) {
+      if (!received_shards[i].empty()) {
+        ++existential_count;
+        if (!first_shard_len)
+          first_shard_len = received_shards[i].size() / 2ull;
+        else if (*first_shard_len != received_shards[i].size() / 2ull)
+          return Error::kInconsistentShardLengths;
+      }
+    }
+
+    if (existential_count < k_)
+      return Error::kNeedMoreShards;
+
+    received_shards.resize(n_);
+    std::array<typename TPolyEncoder::Descriptor::Multiplier,
+               TPolyEncoder::Descriptor::kFieldSize>
+        error_poly_in_log = {0};
+
+    poly_enc_.eval_error_polynomial(received_shards, error_poly_in_log, TPolyEncoder::Descriptor::kFieldSize);
+    const auto shard_len_in_syms = *first_shard_len;
+
+      let mut acc = Vec::<u8>::with_capacity(shard_len_in_syms * 2 * self.k);
+  }
+
 private:
-  ReedSolomon(size_t n, size_t k, size_t wanted_n, const PolyEncoder &poly_enc)
+  ReedSolomon(size_t n, size_t k, size_t wanted_n, const TPolyEncoder &poly_enc)
       : n_(n), k_(k), wanted_n_(wanted_n), poly_enc_(poly_enc) {}
 
   size_t shardLen(size_t payload_size) {
@@ -95,7 +126,7 @@ private:
   const size_t n_;
   const size_t k_;
   const size_t wanted_n_;
-  const PolyEncoder &poly_enc_;
+  const TPolyEncoder &poly_enc_;
 };
 
 } // namespace ec_cpp

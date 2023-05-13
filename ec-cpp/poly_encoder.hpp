@@ -220,6 +220,34 @@ template <typename TDescriptor> struct PolyEncoder final {
     return codeword;
   }
 
+  /// [101...001] erasures are bit-array representation, where 1 - is empty and
+  /// 0 - is full.
+  template <typename Shard>
+  void eval_error_polynomial(const std::vector<Shard> &erasure,
+                             std::array<typename TDescriptor::Multiplier,
+                                        TDescriptor::kFieldSize> &log_walsh2,
+                             size_t n) {
+      const auto z = std::min(n, erasure.size());
+      for (size_t i = 0; i < z; ++i)
+          log_walsh2[i] = typename Descriptor::Multiplier(erasure[i].empty());
+
+      /*memset()
+      for (size_t i = z; i < n; ++i) {
+          log_walsh2[i] = typename Descriptor::Multiplier(0);
+      }*/
+      walsh<Descriptor>(log_walsh2);
+      for (size_t i = 0; i < n; ++i) {
+          const auto tmp =
+                  typename Descriptor::Wide(log_walsh2[i]) * typename Descriptor::Wide(Descriptor::kLogWalsh[i]);
+          log_walsh2[i] = typename Descriptor::Multiplier(
+                  tmp % Descriptor::Wide(Descriptor::kOneMask));
+      }
+      walsh<Descriptor>(log_walsh2);
+      for (size_t i = 0; i < z; ++i)
+          if (erasure[i].empty())
+              log_walsh2[i] = typename Descriptor::Multiplier(Descriptor::kOneMask) - log_walsh2[i];
+  }
+
 private:
   const Descriptor &descriptor_;
   const AdditiveFFT AFFT{AdditiveFFT::initalize(descriptor_.kTables)};

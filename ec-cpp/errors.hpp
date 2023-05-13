@@ -17,6 +17,8 @@ enum struct Error {
   kPayloadSizeIsZero,
   kTooManyValidators,
   kNotEnoughValidators,
+  kNeedMoreShards,
+  kInconsistentShardLengths,
 };
 
 template <typename T> using Result = std::variant<T, Error>;
