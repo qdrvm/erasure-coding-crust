@@ -164,7 +164,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     }
   };
 
-  Result<std::vector<Additive>> encodeSub(Slice<uint8_t> bytes, size_t n,
+  Result<bool> encodeSub(std::vector<Additive> &codeword, Slice<uint8_t> bytes, size_t n,
                                           size_t k) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
@@ -187,7 +187,8 @@ template <typename TDescriptor> struct PolyEncoder final {
     assert(l >= dl);
 
     auto zero_bytes_to_add = n * 2 - dl;
-    std::vector<Additive> data;
+    thread_local std::vector<Additive> data;
+    data.clear();
     data.reserve((bytes.size() + 1) / sizeof(typename Descriptor::Elt) +
                  zero_bytes_to_add / sizeof(typename Descriptor::Elt));
 
@@ -213,11 +214,11 @@ template <typename TDescriptor> struct PolyEncoder final {
     const auto l_0 = data.size();
     assert(l_0 == n);
 
-    auto codeword = data;
+    codeword.assign(data.begin(), data.end());
     assert(codeword.size() == n);
 
     encodeLow(data, k, codeword, n);
-    return codeword;
+    return true;
   }
 
   /// [101...001] erasures are bit-array representation, where 1 - is empty and
@@ -227,25 +228,26 @@ template <typename TDescriptor> struct PolyEncoder final {
                              std::array<typename TDescriptor::Multiplier,
                                         TDescriptor::kFieldSize> &log_walsh2,
                              size_t n) {
-      const auto z = std::min(n, erasure.size());
-      for (size_t i = 0; i < z; ++i)
-          log_walsh2[i] = typename Descriptor::Multiplier(erasure[i].empty());
+    const auto z = std::min(n, erasure.size());
+    for (size_t i = 0; i < z; ++i)
+      log_walsh2[i] = typename Descriptor::Multiplier(erasure[i].empty());
 
-      /*memset()
-      for (size_t i = z; i < n; ++i) {
-          log_walsh2[i] = typename Descriptor::Multiplier(0);
-      }*/
-      walsh<Descriptor>(log_walsh2);
-      for (size_t i = 0; i < n; ++i) {
-          const auto tmp =
-                  typename Descriptor::Wide(log_walsh2[i]) * typename Descriptor::Wide(Descriptor::kLogWalsh[i]);
-          log_walsh2[i] = typename Descriptor::Multiplier(
-                  tmp % Descriptor::Wide(Descriptor::kOneMask));
-      }
-      walsh<Descriptor>(log_walsh2);
-      for (size_t i = 0; i < z; ++i)
-          if (erasure[i].empty())
-              log_walsh2[i] = typename Descriptor::Multiplier(Descriptor::kOneMask) - log_walsh2[i];
+    /*memset()
+    for (size_t i = z; i < n; ++i) {
+        log_walsh2[i] = typename Descriptor::Multiplier(0);
+    }*/
+    walsh<Descriptor>(log_walsh2);
+    for (size_t i = 0; i < n; ++i) {
+      const auto tmp = typename Descriptor::Wide(log_walsh2[i]) *
+                       typename Descriptor::Wide(Descriptor::kLogWalsh[i]);
+      log_walsh2[i] = typename Descriptor::Multiplier(
+          tmp % Descriptor::Wide(Descriptor::kOneMask));
+    }
+    walsh<Descriptor>(log_walsh2);
+    for (size_t i = 0; i < z; ++i)
+      if (erasure[i].empty())
+        log_walsh2[i] = typename Descriptor::Multiplier(Descriptor::kOneMask) -
+                        log_walsh2[i];
   }
 
 private:

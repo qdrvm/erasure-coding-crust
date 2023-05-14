@@ -67,11 +67,11 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       assert(!data_piece.empty());
       assert(data_piece.size() <= k2);
 
-      auto result = poly_enc_.encodeSub(data_piece, n_, k_);
+      thread_local std::vector<typename TPolyEncoder::Additive> encoding_run{};
+      auto result = poly_enc_.encodeSub(encoding_run, data_piece, n_, k_);
       if (resultHasError(result)) {
         return resultGetError(std::move(result));
       }
-      auto encoding_run = resultGetValue(std::move(result));
       for (size_t val_idx = 0ull; val_idx < validator_count; ++val_idx) {
         auto &shard = shards[val_idx];
         const auto src = encoding_run[val_idx]._0;
@@ -106,10 +106,32 @@ template <typename TPolyEncoder> struct ReedSolomon final {
                TPolyEncoder::Descriptor::kFieldSize>
         error_poly_in_log = {0};
 
-    poly_enc_.eval_error_polynomial(received_shards, error_poly_in_log, TPolyEncoder::Descriptor::kFieldSize);
+    poly_enc_.eval_error_polynomial(received_shards, error_poly_in_log,
+                                    TPolyEncoder::Descriptor::kFieldSize);
     const auto shard_len_in_syms = *first_shard_len;
 
-      let mut acc = Vec::<u8>::with_capacity(shard_len_in_syms * 2 * self.k);
+    std::vector<uint8_t> acc;
+    acc.reserve(shard_len_in_syms * 2ull * k_);
+
+    for (size_t i = 0; i < shard_len_in_syms; ++i) {
+      thread_local static std::vector<
+          std::optional<typename TPolyEncoder::Additive>>
+          decoding_run;
+      decoding_run.clear();
+      decoding_run.reserve(received_shards.size());
+
+      for (const auto &s : received_shards) {
+        if (s.empty())
+          decoding_run.emplace_back(std::nullopt);
+        else
+          decoding_run.emplace_back(
+              typename TPolyEncoder::Descriptor::fromBEBytes(
+                  &s[i * sizeof(typename TPolyEncoder::Elt)]));
+
+        assert(decoding_run.size() == n_);
+        //poly_enc_.reconstruct_sub()
+      }
+    }
   }
 
 private:
