@@ -25,137 +25,8 @@ template <typename TDescriptor> struct PolyEncoder final {
   using Descriptor = TDescriptor;
   PolyEncoder(const Descriptor &descriptor) : descriptor_{descriptor} {}
 
-  struct Additive {
-    typename Descriptor::Elt _0;
-
-    typename Descriptor::Multiplier
-    toMultiplier(const typename Descriptor::Tables &tables) const {
-      const auto &log_table = std::get<0>(tables);
-      return typename Descriptor::Multiplier(log_table[size_t(_0)]);
-    }
-
-    Additive mul(typename Descriptor::Multiplier other,
-                 const typename Descriptor::Tables &tables) {
-      if (_0 == typename Descriptor::Elt(0))
-        return Additive{0};
-
-      const auto &[log_table, exp_table, _] = tables;
-      const auto log = (typename Descriptor::Wide(log_table[size_t(_0)])) +
-                       typename Descriptor::Wide(other);
-      const auto offset =
-          (log & typename Descriptor::Wide(Descriptor::kOneMask)) +
-          (log >> Descriptor::kFieldBits);
-      return Additive{exp_table[size_t(offset)]};
-    }
-
-    void mulAssignSlice(Additive *selfy, size_t count,
-                        typename Descriptor::Multiplier other,
-                        const typename Descriptor::Tables &tables) {
-      for (size_t ix = 0ull; ix < count; ++ix)
-        selfy[ix] = selfy[ix].mul(other, tables);
-    }
-  };
-
-  struct AdditiveFFT {
-    typename Descriptor::Multiplier skews[size_t(Descriptor::kOneMask)];
-
-    static AdditiveFFT initalize(const typename Descriptor::Tables &tables) {
-      typename Descriptor::Elt base[Descriptor::kFieldBits - 1ull] = {0};
-      Additive skews_additive[Descriptor::kOneMask] = {0};
-
-      for (size_t i = 1; i < Descriptor::kFieldBits; ++i)
-        base[i - 1] = 1 << i;
-
-      for (size_t m = 0ull; m < (Descriptor::kFieldBits - 1); ++m) {
-        const auto step = 1ull << (m + 1ull);
-        skews_additive[(1ull << m) - 1ull] = Additive{0};
-        for (size_t i = m; i < (Descriptor::kFieldBits - 1); ++i) {
-          const auto s = 1ull << (i + 1ull);
-          auto j = (1ull << m) - 1ull;
-          while (j < s) {
-            skews_additive[j + s] = Additive{
-                typename Descriptor::Elt(skews_additive[j]._0 ^ base[i])};
-            j += step;
-          }
-        }
-
-        const auto idx = Additive{base[m]}.mul(
-            Additive{
-                typename Descriptor::Elt(base[m] ^ typename Descriptor::Elt(1))}
-                .toMultiplier(tables),
-            tables);
-        base[m] = Descriptor::kOneMask - idx.toMultiplier(tables);
-        for (size_t i = (m + 1ull); i < (Descriptor::kFieldBits - 1ull); ++i) {
-          const auto b =
-              (Additive{typename Descriptor::Elt(base[i] ^ 1)}.toMultiplier(
-                   tables) +
-               typename Descriptor::Wide(base[m])) %
-              typename Descriptor::Wide(Descriptor::kOneMask);
-          base[i] = Additive{base[i]}
-                        .mul(typename Descriptor::Multiplier(b), tables)
-                        ._0;
-        }
-      }
-
-      AdditiveFFT result;
-      for (size_t i = 0ull; i < size_t(Descriptor::kOneMask); ++i)
-        result.skews[i] = skews_additive[i].toMultiplier(tables);
-
-      base[0] = Descriptor::kOneMask - base[0];
-      for (size_t i = 1ull; i < (Descriptor::kFieldBits - 1ull); ++i)
-        base[i] = typename Descriptor::Elt(
-            (typename Descriptor::Wide(Descriptor::kOneMask) -
-             typename Descriptor::Wide(base[i]) +
-             typename Descriptor::Wide(base[i - 1])) %
-            typename Descriptor::Wide(Descriptor::kOneMask));
-      return result;
-    }
-
-    void inverse_afft(Additive *data, size_t size, size_t index,
-                      const typename Descriptor::Tables &tables) const {
-      size_t depart_no(1ull);
-      while (depart_no < size) {
-        size_t j(depart_no);
-        while (j < size) {
-          for (size_t i = (j - depart_no); i < j; ++i)
-            data[i + depart_no]._0 = (data[i + depart_no]._0 ^ data[i]._0);
-
-          const auto skew = skews[j + index - 1ull];
-          if (skew != Descriptor::kOneMask)
-            for (size_t i = (j - depart_no); i < j; ++i)
-              data[i]._0 =
-                  (data[i]._0 ^ data[i + depart_no].mul(skew, tables)._0);
-
-          j += (depart_no << 1ull);
-        }
-        depart_no = (depart_no << 1ull);
-      }
-    }
-
-    void afft(Additive *data, size_t size, size_t index,
-              const typename Descriptor::Tables &tables) const {
-      size_t depart_no(size >> 1ull);
-      while (depart_no > 0) {
-        size_t j(depart_no);
-        while (j < size) {
-          const auto skew = skews[j + index - 1ull];
-          if (skew != Descriptor::kOneMask)
-            for (size_t i = (j - depart_no); i < j; ++i)
-              data[i]._0 =
-                  data[i]._0 ^ data[i + depart_no].mul(skew, tables)._0;
-
-          for (size_t i = (j - depart_no); i < j; ++i)
-            data[i + depart_no]._0 = data[i + depart_no]._0 ^ data[i]._0;
-
-          j += (depart_no << 1ull);
-        }
-        depart_no = (depart_no >> 1ull);
-      }
-    }
-  };
-
-  Result<bool> encodeSub(std::vector<Additive> &codeword, Slice<uint8_t> bytes,
-                         size_t n, size_t k) const {
+  Result<bool> encodeSub(std::vector<Additive<Descriptor>> &codeword,
+                         Slice<uint8_t> bytes, size_t n, size_t k) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
     assert(bytes.size() <= (k << 1));
@@ -177,7 +48,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     assert(l >= dl);
 
     auto zero_bytes_to_add = n * 2 - dl;
-    thread_local std::vector<Additive> data;
+    thread_local std::vector<Additive<Descriptor>> data;
     data.clear();
     data.reserve((bytes.size() + 1) / sizeof(typename Descriptor::Elt) +
                  zero_bytes_to_add / sizeof(typename Descriptor::Elt));
@@ -185,7 +56,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     const auto *current = &bytes[0];
     const auto *end = &bytes[bytes.size()];
     while (end - current >= sizeof(typename Descriptor::Elt)) {
-      data.emplace_back(Additive{Descriptor::fromBEBytes(current)});
+      data.emplace_back(Additive<Descriptor>{Descriptor::fromBEBytes(current)});
       current += sizeof(typename Descriptor::Elt);
     }
     if (end != current) {
@@ -194,12 +65,12 @@ template <typename TDescriptor> struct PolyEncoder final {
 
       zero_bytes_to_add -=
           (sizeof(typename Descriptor::Elt) - size_t(end - current));
-      data.emplace_back(Additive{Descriptor::fromBEBytes(b)});
+      data.emplace_back(Additive<Descriptor>{Descriptor::fromBEBytes(b)});
     }
     assert((zero_bytes_to_add % sizeof(typename Descriptor::Elt)) == 0ull);
     data.insert(data.end(),
                 zero_bytes_to_add / sizeof(typename Descriptor::Elt),
-                Additive{0ull});
+                Additive<Descriptor>{0ull});
 
     const auto l_0 = data.size();
     assert(l_0 == n);
@@ -243,7 +114,8 @@ template <typename TDescriptor> struct PolyEncoder final {
 
   template <typename Shard>
   Result<bool> reconstruct_sub(
-      std::vector<uint8_t> &recovered_bytes, std::vector<Additive> &codeword,
+      std::vector<uint8_t> &recovered_bytes,
+      std::vector<Additive<Descriptor>> &codeword,
       const std::vector<Shard> &erasures, size_t gap, size_t n, size_t k,
       const std::array<typename Descriptor::Multiplier, Descriptor::kFieldSize>
           &error_poly) const {
@@ -253,8 +125,8 @@ template <typename TDescriptor> struct PolyEncoder final {
     assert(k <= n / 2);
 
     const auto recover_up_to = k;
-    thread_local std::vector<Additive> recovered;
-    recovered.assign(recover_up_to, Additive{0});
+    thread_local std::vector<Additive<Descriptor>> recovered;
+    recovered.assign(recover_up_to, Additive<Descriptor>{0});
 
     for (size_t idx = 0ull; idx < codeword.size(); ++idx)
       if (idx < recovered.size())
@@ -280,11 +152,13 @@ template <typename TDescriptor> struct PolyEncoder final {
 
 private:
   const Descriptor &descriptor_;
-  const AdditiveFFT AFFT{AdditiveFFT::initalize(descriptor_.kTables)};
+  const AdditiveFFT<Descriptor> AFFT{
+      AdditiveFFT<Descriptor>::initalize(descriptor_.kTables)};
 
   template <typename Shard>
-  void decode_main(std::vector<Additive> &codeword, size_t recover_up_to,
-                   const std::vector<Shard> &erasure, size_t gap,
+  void decode_main(std::vector<Additive<Descriptor>> &codeword,
+                   size_t recover_up_to, const std::vector<Shard> &erasure,
+                   size_t gap,
                    const std::array<typename Descriptor::Multiplier,
                                     Descriptor::kFieldSize> &log_walsh2,
                    size_t n) const {
@@ -294,7 +168,7 @@ private:
 
     for (size_t i = 0ull; i < codeword.size(); ++i)
       codeword[i] = erasure[i].empty()
-                        ? Additive{0}
+                        ? Additive<Descriptor>{0}
                         : codeword[i].mul(log_walsh2[i], descriptor_.kTables);
 
     codeword.resize(codeword.size() + gap);
@@ -306,15 +180,16 @@ private:
     for (size_t i = 0ull; i < recover_up_to; ++i)
       codeword[i] = (i >= erasure.size() || erasure[i].empty())
                         ? codeword[i].mul(log_walsh2[i], descriptor_.kTables)
-                        : Additive{0};
+                        : Additive<Descriptor>{0};
   }
 
-  void tweaked_formal_derivative(std::vector<Additive> &codeword,
+  void tweaked_formal_derivative(std::vector<Additive<Descriptor>> &codeword,
                                  size_t n) const {
     formal_derivative(codeword, n);
   }
 
-  void formal_derivative(std::vector<Additive> &cos, size_t size) const {
+  void formal_derivative(std::vector<Additive<Descriptor>> &cos,
+                         size_t size) const {
     auto swallow = [&](size_t j, size_t offset) {
       const auto index = j + offset;
       const auto in_range = index < cos.size();
@@ -335,8 +210,8 @@ private:
     }
   }
 
-  void encodeLow(const std::vector<Additive> &data, size_t k,
-                 std::vector<Additive> &codeword, size_t n) const {
+  void encodeLow(const std::vector<Additive<Descriptor>> &data, size_t k,
+                 std::vector<Additive<Descriptor>> &codeword, size_t n) const {
     assert(k + k <= n);
     assert(codeword.size() == n);
     assert(data.size() == n);

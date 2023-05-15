@@ -175,7 +175,8 @@ TEST(erasure_coding, Cpp_AFFT_tables) {
 
   ec_cpp::f2e16_Descriptor desc_;
   ec_cpp::PolyEncoder_f2e16 init{desc_};
-  auto src_1 = ec_cpp::PolyEncoder_f2e16::AdditiveFFT::initalize(desc_.kTables);
+  auto src_1 =
+      ec_cpp::AdditiveFFT<ec_cpp::f2e16_Descriptor>::initalize(desc_.kTables);
 
   ASSERT_EQ(sizeof(src_0) / sizeof(src_0[0]),
             sizeof(src_1.skews) / sizeof(src_1.skews[0]));
