@@ -351,3 +351,42 @@ TEST(erasure_coding, Reconstruct_WrongIndex) {
   ECCR_deallocate_chunk_list(&chunks);
   ECCR_deallocate_data_block(&data);
 }
+
+TEST(erasure_coding, Cpp_Decode_Big) {
+  std::vector<uint8_t> test;
+  test.resize(1ull * 1024ull * 1024ull);
+
+  uint64_t counter = 0ull;
+  for (auto &s : test)
+    s = (++counter % 0xff);
+
+  ChunksList out{};
+  DataBlock data{.array = test.data(), .length = test.size()};
+  EXPECT_TRUE(ECCR_obtain_chunks(n_validators, &data, &out).tag ==
+              NPRSResult_Tag::NPRS_RESULT_OK);
+
+  auto enc_create_result = ec_cpp::create(n_validators);
+  ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+
+  auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
+  auto enc_result =
+      encoder.encode(ec_cpp::Slice<uint8_t>(test.data(), test.size()));
+  ASSERT_EQ(ec_cpp::resultHasError(enc_result), false);
+
+  auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
+  ASSERT_EQ(result_data.size(), out.count);
+
+  DataBlock data_out{};
+  EXPECT_TRUE(ECCR_reconstruct(n_validators, &out, &data_out).tag ==
+              NPRSResult_Tag::NPRS_RESULT_OK);
+
+  auto decode_result = encoder.reconstruct(result_data);
+  ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
+
+  auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
+  ASSERT_EQ(data_out.length, decoded.size());
+
+  for (size_t i = 0; i < data_out.length; ++i) {
+    ASSERT_EQ(data_out.array[i], decoded[i]);
+  }
+}
