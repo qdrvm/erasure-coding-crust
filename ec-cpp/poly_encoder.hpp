@@ -233,10 +233,6 @@ template <typename TDescriptor> struct PolyEncoder final {
     for (size_t i = 0; i < z; ++i)
       log_walsh2[i] = typename Descriptor::Multiplier(erasure[i].empty());
 
-    /*memset()
-    for (size_t i = z; i < n; ++i) {
-        log_walsh2[i] = typename Descriptor::Multiplier(0);
-    }*/
     walsh<Descriptor>(log_walsh2);
     const auto &[_, __, log_walsh] = descriptor_.kTables;
     for (size_t i = 0; i < n; ++i) {
@@ -253,32 +249,23 @@ template <typename TDescriptor> struct PolyEncoder final {
   }
 
   template <typename Shard>
-  Result<bool>
-  reconstruct_sub(std::vector<uint8_t> &recovered_bytes,
-                  const std::vector<std::optional<Additive>> &codewords,
-                  const std::vector<Shard> &erasures, size_t n, size_t k,
-                  const std::array<typename Descriptor::Multiplier,
-                                   Descriptor::kFieldSize> &error_poly) const {
+  Result<bool> reconstruct_sub(
+      std::vector<uint8_t> &recovered_bytes, std::vector<Additive> &codeword,
+      const std::vector<Shard> &erasures, size_t n, size_t k,
+      const std::array<typename Descriptor::Multiplier, Descriptor::kFieldSize>
+          &error_poly) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
-    assert(codewords.size() == n);
+    assert(codeword.size() == n);
     assert(k <= n / 2);
 
     const auto recover_up_to = k;
-    std::vector<Additive> recovered;
+    thread_local std::vector<Additive> recovered;
     recovered.assign(recover_up_to, Additive{0});
 
-    /// TODO(iceseer): try to remove
-    thread_local std::vector<Additive> codeword;
-    codeword.clear();
-    codeword.reserve(codewords.size());
-    for (size_t idx = 0ull; idx < codewords.size(); ++idx) {
-      const auto value = codewords[idx] ? *codewords[idx] : Additive{0};
-      if (idx < recovered.size()) {
-        recovered[idx] = value;
-      }
-      codeword.emplace_back(value);
-    }
+    for (size_t idx = 0ull; idx < codeword.size(); ++idx)
+      if (idx < recovered.size())
+        recovered[idx] = codeword[idx];
 
     assert(codeword.size() == n);
     decode_main(codeword, recover_up_to, erasures, error_poly, n);

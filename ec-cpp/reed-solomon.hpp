@@ -113,16 +113,14 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     std::vector<uint8_t> acc;
     acc.reserve(shard_len_in_syms * 2ull * k_);
 
-      thread_local std::vector<
-          std::optional<typename TPolyEncoder::Additive>>
-          decoding_run;
+    thread_local std::vector<typename TPolyEncoder::Additive> decoding_run;
     for (size_t i = 0; i < shard_len_in_syms; ++i) {
       decoding_run.clear();
       decoding_run.reserve(received_shards.size());
 
       for (const auto &s : received_shards) {
         if (s.empty())
-          decoding_run.emplace_back(std::nullopt);
+          decoding_run.emplace_back(typename TPolyEncoder::Additive{0});
         else
           decoding_run.emplace_back(typename TPolyEncoder::Additive{
               TPolyEncoder::Descriptor::fromBEBytes(
