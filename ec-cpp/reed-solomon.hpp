@@ -53,8 +53,10 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     const auto validator_count = wanted_n_;
     const auto k2 = k_ * 2;
 
-    std::vector<Shard> shards;
+    thread_local std::vector<Shard> shards;
+    shards.clear();
     shards.reserve(validator_count);
+
     for (size_t ix = 0; ix < validator_count; ++ix)
       shards.emplace_back(shard_len);
 
@@ -84,7 +86,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
 
   Result<std::vector<uint8_t>>
   reconstruct(std::vector<Shard> &received_shards) {
-    // const auto gap = math::sat_sub_unsigned(n_, received_shards.size());
+     const auto gap = math::sat_sub_unsigned(n_, received_shards.size());
 
     size_t existential_count(0ull);
     std::optional<size_t> first_shard_len;
@@ -101,12 +103,11 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     if (existential_count < k_)
       return Error::kNeedMoreShards;
 
-    received_shards.resize(n_);
     std::array<typename TPolyEncoder::Descriptor::Multiplier,
                TPolyEncoder::Descriptor::kFieldSize>
         error_poly_in_log = {0};
 
-    poly_enc_.eval_error_polynomial(received_shards, error_poly_in_log,
+    poly_enc_.eval_error_polynomial(received_shards, gap, error_poly_in_log,
                                     TPolyEncoder::Descriptor::kFieldSize);
     const auto shard_len_in_syms = *first_shard_len;
 
@@ -114,9 +115,11 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     acc.reserve(shard_len_in_syms * 2ull * k_);
 
     thread_local std::vector<typename TPolyEncoder::Additive> decoding_run;
+      decoding_run.clear();
+      decoding_run.reserve(n_);
+
     for (size_t i = 0; i < shard_len_in_syms; ++i) {
       decoding_run.clear();
-      decoding_run.reserve(received_shards.size());
 
       for (const auto &s : received_shards) {
         if (s.empty())
@@ -127,9 +130,12 @@ template <typename TPolyEncoder> struct ReedSolomon final {
                   &s[i * sizeof(typename TPolyEncoder::Descriptor::Elt)])});
       }
 
+      for (size_t l = 0; l < gap; ++l)
+          decoding_run.emplace_back(typename TPolyEncoder::Additive{0});
+
       assert(decoding_run.size() == n_);
       auto result = poly_enc_.reconstruct_sub(
-          acc, decoding_run, received_shards, n_, k_, error_poly_in_log);
+          acc, decoding_run, received_shards, gap, n_, k_, error_poly_in_log);
       assert(!resultHasError(result));
     }
     return acc;

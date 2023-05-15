@@ -225,13 +225,17 @@ template <typename TDescriptor> struct PolyEncoder final {
   /// [101...001] erasures are bit-array representation, where 1 - is empty and
   /// 0 - is full.
   template <typename Shard>
-  void eval_error_polynomial(const std::vector<Shard> &erasure,
+  void eval_error_polynomial(const std::vector<Shard> &erasure, size_t gap,
                              std::array<typename TDescriptor::Multiplier,
                                         TDescriptor::kFieldSize> &log_walsh2,
                              size_t n) const {
-    const auto z = std::min(n, erasure.size());
+      auto is_erasured = [&](size_t i) -> bool {
+          return i >= erasure.size() || erasure[i].empty();
+      };
+
+    const auto z = std::min(n, erasure.size() + gap);
     for (size_t i = 0; i < z; ++i)
-      log_walsh2[i] = typename Descriptor::Multiplier(erasure[i].empty());
+      log_walsh2[i] = typename Descriptor::Multiplier(is_erasured(i));
 
     walsh<Descriptor>(log_walsh2);
     const auto &[_, __, log_walsh] = descriptor_.kTables;
@@ -243,7 +247,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     }
     walsh<Descriptor>(log_walsh2);
     for (size_t i = 0; i < z; ++i)
-      if (erasure[i].empty())
+      if (is_erasured(i))
         log_walsh2[i] = typename Descriptor::Multiplier(Descriptor::kOneMask) -
                         log_walsh2[i];
   }
@@ -251,7 +255,7 @@ template <typename TDescriptor> struct PolyEncoder final {
   template <typename Shard>
   Result<bool> reconstruct_sub(
       std::vector<uint8_t> &recovered_bytes, std::vector<Additive> &codeword,
-      const std::vector<Shard> &erasures, size_t n, size_t k,
+      const std::vector<Shard> &erasures, size_t gap, size_t n, size_t k,
       const std::array<typename Descriptor::Multiplier, Descriptor::kFieldSize>
           &error_poly) const {
     assert(math::isPowerOf2(n));
@@ -268,10 +272,10 @@ template <typename TDescriptor> struct PolyEncoder final {
         recovered[idx] = codeword[idx];
 
     assert(codeword.size() == n);
-    decode_main(codeword, recover_up_to, erasures, error_poly, n);
+    decode_main(codeword, recover_up_to, erasures, gap, error_poly, n);
 
     for (size_t idx = 0ull; idx < recover_up_to; ++idx)
-      if (erasures[idx].empty())
+      if (idx >= erasures.size() || erasures[idx].empty())
         recovered[idx] = codeword[idx];
 
     const auto was = recovered_bytes.size();
@@ -292,16 +296,16 @@ private:
 
   template <typename Shard>
   void decode_main(std::vector<Additive> &codeword, size_t recover_up_to,
-                   const std::vector<Shard> &erasure,
+                   const std::vector<Shard> &erasure, size_t gap,
                    const std::array<typename Descriptor::Multiplier,
                                     Descriptor::kFieldSize> &log_walsh2,
                    size_t n) const {
     assert(codeword.size() == n);
     assert(n >= recover_up_to);
-    assert(erasure.size() == n);
+    assert(erasure.size() + gap == n);
 
     for (size_t i = 0ull; i < n; ++i)
-      codeword[i] = erasure[i].empty()
+      codeword[i] = (i >= erasure.size() || erasure[i].empty())
                         ? Additive{0}
                         : codeword[i].mul(log_walsh2[i], descriptor_.kTables);
 
@@ -311,7 +315,7 @@ private:
     AFFT.afft(codeword.data(), n, 0, descriptor_.kTables);
 
     for (size_t i = 0ull; i < recover_up_to; ++i)
-      codeword[i] = erasure[i].empty()
+      codeword[i] = (i >= erasure.size() || erasure[i].empty())
                         ? codeword[i].mul(log_walsh2[i], descriptor_.kTables)
                         : Additive{0};
   }
