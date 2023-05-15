@@ -269,7 +269,8 @@ template <typename TDescriptor> struct PolyEncoder final {
     recovered.assign(recover_up_to, Additive{0});
 
     /// TODO(iceseer): try to remove
-    std::vector<Additive> codeword;
+    thread_local std::vector<Additive> codeword;
+    codeword.clear();
     codeword.reserve(codewords.size());
     for (size_t idx = 0ull; idx < codewords.size(); ++idx) {
       const auto value = codewords[idx] ? *codewords[idx] : Additive{0};
