@@ -69,15 +69,13 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       assert(!data_piece.empty());
       assert(data_piece.size() <= k2);
 
-      thread_local std::vector<Additive<typename TPolyEncoder::Descriptor>>
-          encoding_run{};
-      auto result = poly_enc_.encodeSub(encoding_run, data_piece, n_, k_);
+      auto result = poly_enc_.encodeSub(local(), data_piece, n_, k_);
       if (resultHasError(result)) {
         return resultGetError(std::move(result));
       }
       for (size_t val_idx = 0ull; val_idx < validator_count; ++val_idx) {
         auto &shard = shards[val_idx];
-        const auto src = encoding_run[val_idx]._0;
+        const auto src = local()[val_idx]._0;
         TPolyEncoder::Descriptor::toBEBytes((uint8_t *)&shard[chunk_idx * 2ull],
                                             src);
       }
@@ -115,27 +113,24 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     std::vector<uint8_t> acc;
     acc.reserve(shard_len_in_syms * 2ull * k_);
 
-    thread_local std::vector<Additive<typename TPolyEncoder::Descriptor>>
-        decoding_run;
-    decoding_run.clear();
-    decoding_run.reserve(received_shards.size());
+    local().clear();
+    local().reserve(received_shards.size());
 
     for (size_t i = 0; i < shard_len_in_syms; ++i) {
-      decoding_run.clear();
+      local().clear();
 
       for (const auto &s : received_shards) {
         if (s.empty())
-          decoding_run.emplace_back(
-              Additive<typename TPolyEncoder::Descriptor>{0});
+          local().emplace_back(Additive<typename TPolyEncoder::Descriptor>{0});
         else
-          decoding_run.emplace_back(Additive<typename TPolyEncoder::Descriptor>{
+          local().emplace_back(Additive<typename TPolyEncoder::Descriptor>{
               TPolyEncoder::Descriptor::fromBEBytes(
                   &s[i * sizeof(typename TPolyEncoder::Descriptor::Elt)])});
       }
 
-      assert(decoding_run.size() + gap == n_);
-      auto result = poly_enc_.reconstructSub(acc, decoding_run, received_shards,
-                                             gap, n_, k_, error_poly_in_log);
+      assert(local().size() + gap == n_);
+      auto result = poly_enc_.reconstructSub(acc, local(), received_shards, gap,
+                                             n_, k_, error_poly_in_log);
       assert(!resultHasError(result));
     }
     return acc;
@@ -150,6 +145,11 @@ private:
     const auto shard_symbols_ceil = (payload_symbols + k_ - 1) / k_;
     const auto shard_bytes = shard_symbols_ceil * 2;
     return shard_bytes;
+  }
+
+  std::vector<Additive<typename TPolyEncoder::Descriptor>> &local() const {
+    thread_local std::vector<Additive<typename TPolyEncoder::Descriptor>> data;
+    return data;
   }
 
   const size_t n_;

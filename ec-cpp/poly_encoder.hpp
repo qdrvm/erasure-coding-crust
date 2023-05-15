@@ -48,15 +48,15 @@ template <typename TDescriptor> struct PolyEncoder final {
     assert(l >= dl);
 
     auto zero_bytes_to_add = n * 2 - dl;
-    thread_local std::vector<Additive<Descriptor>> data;
-    data.clear();
-    data.reserve((bytes.size() + 1) / sizeof(typename Descriptor::Elt) +
-                 zero_bytes_to_add / sizeof(typename Descriptor::Elt));
+    local().clear();
+    local().reserve((bytes.size() + 1) / sizeof(typename Descriptor::Elt) +
+                    zero_bytes_to_add / sizeof(typename Descriptor::Elt));
 
     const auto *current = &bytes[0];
     const auto *end = &bytes[bytes.size()];
     while (end - current >= sizeof(typename Descriptor::Elt)) {
-      data.emplace_back(Additive<Descriptor>{Descriptor::fromBEBytes(current)});
+      local().emplace_back(
+          Additive<Descriptor>{Descriptor::fromBEBytes(current)});
       current += sizeof(typename Descriptor::Elt);
     }
     if (end != current) {
@@ -65,20 +65,20 @@ template <typename TDescriptor> struct PolyEncoder final {
 
       zero_bytes_to_add -=
           (sizeof(typename Descriptor::Elt) - size_t(end - current));
-      data.emplace_back(Additive<Descriptor>{Descriptor::fromBEBytes(b)});
+      local().emplace_back(Additive<Descriptor>{Descriptor::fromBEBytes(b)});
     }
     assert((zero_bytes_to_add % sizeof(typename Descriptor::Elt)) == 0ull);
-    data.insert(data.end(),
-                zero_bytes_to_add / sizeof(typename Descriptor::Elt),
-                Additive<Descriptor>{0ull});
+    local().insert(local().end(),
+                   zero_bytes_to_add / sizeof(typename Descriptor::Elt),
+                   Additive<Descriptor>{0ull});
 
-    const auto l_0 = data.size();
+    const auto l_0 = local().size();
     assert(l_0 == n);
 
-    codeword.assign(data.begin(), data.end());
+    codeword.assign(local().begin(), local().end());
     assert(codeword.size() == n);
 
-    encodeLow(data, k, codeword, n);
+    encodeLow(local(), k, codeword, n);
     return true;
   }
 
@@ -125,18 +125,17 @@ template <typename TDescriptor> struct PolyEncoder final {
     assert(k <= n / 2);
 
     const auto recover_up_to = k;
-    thread_local std::vector<Additive<Descriptor>> recovered;
-    recovered.assign(recover_up_to, Additive<Descriptor>{0});
+    local().assign(recover_up_to, Additive<Descriptor>{0});
 
     for (size_t idx = 0ull; idx < codeword.size(); ++idx)
-      if (idx < recovered.size())
-        recovered[idx] = codeword[idx];
+      if (idx < local().size())
+        local()[idx] = codeword[idx];
 
     decode_main(codeword, recover_up_to, erasures, gap, error_poly, n);
 
     for (size_t idx = 0ull; idx < recover_up_to; ++idx)
       if (idx >= erasures.size() || erasures[idx].empty())
-        recovered[idx] = codeword[idx];
+        local()[idx] = codeword[idx];
 
     const auto was = recovered_bytes.size();
     recovered_bytes.resize(was +
@@ -145,7 +144,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     for (size_t i = 0; i < k; ++i)
       Descriptor::toBEBytes(
           &recovered_bytes[was + i * sizeof(typename Descriptor::Elt)],
-          recovered[i]._0);
+          local()[i]._0);
 
     return true;
   }
@@ -154,6 +153,11 @@ private:
   const Descriptor &descriptor_;
   const AdditiveFFT<Descriptor> AFFT{
       AdditiveFFT<Descriptor>::initalize(descriptor_.kTables)};
+
+  std::vector<Additive<Descriptor>> &local() const {
+    thread_local std::vector<Additive<Descriptor>> data;
+    return data;
+  }
 
   template <typename Shard>
   void decode_main(std::vector<Additive<Descriptor>> &codeword,
