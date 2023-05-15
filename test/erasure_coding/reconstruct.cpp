@@ -294,6 +294,29 @@ TEST(erasure_coding, Reconstruct1_3) {
   ECCR_deallocate_data_block(&data);
 }
 
+TEST(erasure_coding, Cpp_Reconstruct1_3) {
+  auto enc_create_result = ec_cpp::create(n_validators);
+  ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+
+  auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
+  auto enc_result = encoder.encode(
+      ec_cpp::Slice<uint8_t>((uint8_t *)test_data.data(), test_data.size()));
+  ASSERT_FALSE(ec_cpp::resultHasError(enc_result));
+
+  auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
+  for (size_t ix = 0; ix < n_validators / 3; ++ix)
+    result_data[ix].clear();
+
+  auto decode_result = encoder.reconstruct(result_data);
+  ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
+
+  auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
+  ASSERT_EQ(test_data.size(), decoded.size() - 1ull);
+
+  for (size_t i = 0; i < test_data.size(); ++i)
+    ASSERT_EQ(test_data[i], decoded[i]);
+}
+
 TEST(erasure_coding, ReconstructLess1_3) {
   ChunksList chunks{};
   createTestChunks(chunks);
@@ -309,6 +332,52 @@ TEST(erasure_coding, ReconstructLess1_3) {
               NPRSResult_Tag::NPRS_RESULT_NOT_ENOUGH_CHUNKS);
 
   ECCR_deallocate_chunk_list(&chunks);
+}
+
+TEST(erasure_coding, Cpp_ReconstructLess1_3) {
+  auto enc_create_result = ec_cpp::create(n_validators);
+  ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+
+  auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
+  auto enc_result = encoder.encode(
+      ec_cpp::Slice<uint8_t>((uint8_t *)test_data.data(), test_data.size()));
+  ASSERT_FALSE(ec_cpp::resultHasError(enc_result));
+
+  auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
+  for (size_t ix = 0; ix < n_validators / 2 + 2ull; ++ix)
+    result_data[ix].clear();
+
+  auto decode_result = encoder.reconstruct(result_data);
+  ASSERT_TRUE(ec_cpp::resultHasError(decode_result));
+  ASSERT_EQ(ec_cpp::resultGetError(std::move(decode_result)),
+            ec_cpp::Error::kNeedMoreShards);
+}
+
+TEST(erasure_coding, Cpp_Reconstruct1_3_Border) {
+  auto enc_create_result = ec_cpp::create(n_validators);
+  ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+
+  auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
+  auto enc_result = encoder.encode(
+      ec_cpp::Slice<uint8_t>((uint8_t *)test_data.data(), test_data.size()));
+  ASSERT_FALSE(ec_cpp::resultHasError(enc_result));
+
+  auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
+  result_data[0].clear();
+  result_data[1].clear();
+  // result_data[2];
+  result_data[3].clear();
+  result_data[4].clear();
+  // result_data[5];
+
+  auto decode_result = encoder.reconstruct(result_data);
+  ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
+
+  auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
+  ASSERT_EQ(test_data.size(), decoded.size() - 1ull);
+
+  for (size_t i = 0; i < test_data.size(); ++i)
+    ASSERT_EQ(test_data[i], decoded[i]);
 }
 
 TEST(erasure_coding, Reconstruct1_3_last_one) {
