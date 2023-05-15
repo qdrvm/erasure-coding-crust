@@ -267,6 +267,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     thread_local std::vector<Additive> recovered;
     recovered.assign(recover_up_to, Additive{0});
 
+    /// TODO(iceseer): try to remove
     std::vector<Additive> codeword;
     codeword.reserve(codewords.size());
     for (size_t idx = 0ull; idx < codewords.size(); ++idx) {
@@ -279,6 +280,21 @@ template <typename TDescriptor> struct PolyEncoder final {
 
     assert(codeword.size() == n);
     decode_main(codeword, recover_up_to, erasures, error_poly, n);
+
+    for (size_t idx = 0ull; idx < recover_up_to; ++idx)
+      if (erasures[idx].empty())
+        recovered[idx] = codeword[idx];
+
+    const auto was = recovered_bytes.size();
+    recovered_bytes.resize(was +
+                           recover_up_to * sizeof(typename Descriptor::Elt));
+
+    for (size_t i = 0; i < k; ++i)
+      Descriptor::toBEBytes(
+          &recovered_bytes[was + i * sizeof(typename Descriptor::Elt)],
+          recovered[i]._0);
+
+    return true;
   }
 
 private:

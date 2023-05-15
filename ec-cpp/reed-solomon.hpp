@@ -129,7 +129,9 @@ template <typename TPolyEncoder> struct ReedSolomon final {
                   &s[i * sizeof(typename TPolyEncoder::Elt)]));
 
         assert(decoding_run.size() == n_);
-        // poly_enc_.reconstruct_sub()
+        auto result = poly_enc_.reconstruct_sub(
+            acc, decoding_run, received_shards, n_, k_, error_poly_in_log);
+        assert(!resultHasError(result));
       }
     }
   }
