@@ -58,7 +58,6 @@ template <typename TDescriptor> struct PolyEncoder final {
 
   struct AdditiveFFT {
     typename Descriptor::Multiplier skews[size_t(Descriptor::kOneMask)];
-    typename Descriptor::Multiplier B[Descriptor::kFieldSize >> 1ull];
 
     static AdditiveFFT initalize(const typename Descriptor::Tables &tables) {
       typename Descriptor::Elt base[Descriptor::kFieldBits - 1ull] = {0};
@@ -109,16 +108,6 @@ template <typename TDescriptor> struct PolyEncoder final {
              typename Descriptor::Wide(base[i]) +
              typename Descriptor::Wide(base[i - 1])) %
             typename Descriptor::Wide(Descriptor::kOneMask));
-
-      result.B[0] = typename Descriptor::Multiplier(0);
-      for (size_t i = 0ull; i < (Descriptor::kFieldBits - 1); ++i) {
-        const auto depart = 1ull << i;
-        for (size_t j = 0ull; j < depart; ++j)
-          result.B[j + depart] = typename Descriptor::Multiplier(
-              (typename Descriptor::Wide(result.B[j]) +
-               typename Descriptor::Wide(base[i])) %
-              typename Descriptor::Wide(Descriptor::kOneMask));
-      }
       return result;
     }
 
