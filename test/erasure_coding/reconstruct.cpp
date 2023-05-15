@@ -76,6 +76,29 @@ TEST(erasure_coding, Cpp_Encode) {
   }
 }
 
+TEST(erasure_coding, Cpp_Decode) {
+  std::string_view test[]{
+      test_data
+      };
+
+  for (auto const &t : test) {
+    auto enc_create_result = ec_cpp::create(n_validators);
+    ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+
+    auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
+    auto enc_result =
+        encoder.encode(ec_cpp::Slice<uint8_t>((uint8_t *)t.data(), t.length()));
+    ASSERT_EQ(ec_cpp::resultHasError(enc_result), false);
+
+    auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
+    auto decode_result = encoder.reconstruct(result_data);
+    ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
+
+    auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
+    ASSERT_EQ(t.size(), decoded.size());
+  }
+}
+
 TEST(erasure_coding, Cpp_AFFT_tables) {
   uint16_t src_0[65535];
   ECCR_AFFT_Table(&src_0);

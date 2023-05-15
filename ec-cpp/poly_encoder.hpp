@@ -228,7 +228,7 @@ template <typename TDescriptor> struct PolyEncoder final {
   void eval_error_polynomial(const std::vector<Shard> &erasure,
                              std::array<typename TDescriptor::Multiplier,
                                         TDescriptor::kFieldSize> &log_walsh2,
-                             size_t n) {
+                             size_t n) const {
     const auto z = std::min(n, erasure.size());
     for (size_t i = 0; i < z; ++i)
       log_walsh2[i] = typename Descriptor::Multiplier(erasure[i].empty());
@@ -238,11 +238,12 @@ template <typename TDescriptor> struct PolyEncoder final {
         log_walsh2[i] = typename Descriptor::Multiplier(0);
     }*/
     walsh<Descriptor>(log_walsh2);
+    const auto &[_, __, log_walsh] = descriptor_.kTables;
     for (size_t i = 0; i < n; ++i) {
       const auto tmp = typename Descriptor::Wide(log_walsh2[i]) *
-                       typename Descriptor::Wide(Descriptor::kLogWalsh[i]);
+                       typename Descriptor::Wide(log_walsh[i]);
       log_walsh2[i] = typename Descriptor::Multiplier(
-          tmp % Descriptor::Wide(Descriptor::kOneMask));
+          tmp % (typename Descriptor::Wide(Descriptor::kOneMask)));
     }
     walsh<Descriptor>(log_walsh2);
     for (size_t i = 0; i < z; ++i)
@@ -257,7 +258,7 @@ template <typename TDescriptor> struct PolyEncoder final {
                   const std::vector<std::optional<Additive>> &codewords,
                   const std::vector<Shard> &erasures, size_t n, size_t k,
                   const std::array<typename Descriptor::Multiplier,
-                                   Descriptor::kFieldSize> &error_poly) {
+                                   Descriptor::kFieldSize> &error_poly) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
     assert(codewords.size() == n);
@@ -306,14 +307,14 @@ private:
                    const std::vector<Shard> &erasure,
                    const std::array<typename Descriptor::Multiplier,
                                     Descriptor::kFieldSize> &log_walsh2,
-                   size_t n) {
+                   size_t n) const {
     assert(codeword.size() == n);
     assert(n >= recover_up_to);
     assert(erasure.size() == n);
 
     for (size_t i = 0ull; i < n; ++i)
       codeword[i] = erasure[i].empty()
-                        ? Additive(0)
+                        ? Additive{0}
                         : codeword[i].mul(log_walsh2[i], descriptor_.kTables);
 
     AFFT.inverse_afft(codeword.data(), n, 0, descriptor_.kTables);
@@ -327,15 +328,17 @@ private:
                         : Additive{0};
   }
 
-  void tweaked_formal_derivative(std::vector<Additive> &codeword, size_t n) {
+  void tweaked_formal_derivative(std::vector<Additive> &codeword,
+                                 size_t n) const {
     formal_derivative(codeword, n);
   }
 
-  void formal_derivative(std::vector<Additive> &cos, size_t size) {
+  void formal_derivative(std::vector<Additive> &cos, size_t size) const {
     auto swallow = [&](size_t j, size_t offset) {
       const auto index = j + offset;
       const auto in_range = index < cos.size();
-      cos[j] = cos[j] ^ (in_range ? cos[index] : Additive{0});
+      cos[j]._0 =
+          cos[j]._0 ^ (in_range ? cos[index]._0 : typename Descriptor::Elt(0));
     };
 
     for (size_t i = 1ull; i < size; ++i) {

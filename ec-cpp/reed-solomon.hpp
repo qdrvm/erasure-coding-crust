@@ -124,9 +124,9 @@ template <typename TPolyEncoder> struct ReedSolomon final {
         if (s.empty())
           decoding_run.emplace_back(std::nullopt);
         else
-          decoding_run.emplace_back(
-              typename TPolyEncoder::Descriptor::fromBEBytes(
-                  &s[i * sizeof(typename TPolyEncoder::Elt)]));
+          decoding_run.emplace_back(typename TPolyEncoder::Additive{
+              TPolyEncoder::Descriptor::fromBEBytes(
+                  &s[i * sizeof(typename TPolyEncoder::Descriptor::Elt)])});
 
         assert(decoding_run.size() == n_);
         auto result = poly_enc_.reconstruct_sub(
