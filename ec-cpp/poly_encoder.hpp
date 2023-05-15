@@ -8,6 +8,7 @@
 #include <array>
 #include <assert.h>
 #include <cstdint>
+#include <optional>
 #include <stdlib.h>
 #include <tuple>
 #include <vector>
@@ -164,8 +165,8 @@ template <typename TDescriptor> struct PolyEncoder final {
     }
   };
 
-  Result<bool> encodeSub(std::vector<Additive> &codeword, Slice<uint8_t> bytes, size_t n,
-                                          size_t k) const {
+  Result<bool> encodeSub(std::vector<Additive> &codeword, Slice<uint8_t> bytes,
+                         size_t n, size_t k) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
     assert(bytes.size() <= (k << 1));
@@ -250,9 +251,89 @@ template <typename TDescriptor> struct PolyEncoder final {
                         log_walsh2[i];
   }
 
+  template <typename Shard>
+  Result<bool>
+  reconstruct_sub(std::vector<uint8_t> &recovered_bytes,
+                  const std::vector<std::optional<Additive>> &codewords,
+                  const std::vector<Shard> &erasures, size_t n, size_t k,
+                  const std::array<typename Descriptor::Multiplier,
+                                   Descriptor::kFieldSize> &error_poly) {
+    assert(math::isPowerOf2(n));
+    assert(math::isPowerOf2(k));
+    assert(codewords.size() == n);
+    assert(k <= n / 2);
+
+    const auto recover_up_to = k;
+    thread_local std::vector<Additive> recovered;
+    recovered.assign(recover_up_to, Additive{0});
+
+    std::vector<Additive> codeword;
+    codeword.reserve(codewords.size());
+    for (size_t idx = 0ull; idx < codewords.size(); ++idx) {
+      const auto value = codewords[idx] ? *codewords[idx] : Additive{0};
+      if (idx < recovered.size()) {
+        recovered[idx] = value;
+      }
+      codeword[idx] = value;
+    }
+
+    assert(codeword.size() == n);
+    decode_main(codeword, recover_up_to, erasures, error_poly, n);
+  }
+
 private:
   const Descriptor &descriptor_;
   const AdditiveFFT AFFT{AdditiveFFT::initalize(descriptor_.kTables)};
+
+  template <typename Shard>
+  void decode_main(std::vector<Additive> &codeword, size_t recover_up_to,
+                   const std::vector<Shard> &erasure,
+                   const std::array<typename Descriptor::Multiplier,
+                                    Descriptor::kFieldSize> &log_walsh2,
+                   size_t n) {
+    assert(codeword.size() == n);
+    assert(n >= recover_up_to);
+    assert(erasure.size() == n);
+
+    for (size_t i = 0ull; i < n; ++i)
+      codeword[i] = erasure[i].empty()
+                        ? Additive(0)
+                        : codeword[i].mul(log_walsh2[i], descriptor_.kTables);
+
+    AFFT.inverse_afft(codeword.data(), n, 0, descriptor_.kTables);
+    tweaked_formal_derivative(codeword, n);
+
+    AFFT.afft(codeword.data(), n, 0, descriptor_.kTables);
+
+    for (size_t i = 0ull; i < recover_up_to; ++i)
+      codeword[i] = erasure[i].empty()
+                        ? codeword[i].mul(log_walsh2[i], descriptor_.kTables)
+                        : Additive{0};
+  }
+
+  void tweaked_formal_derivative(std::vector<Additive> &codeword, size_t n) {
+    formal_derivative(codeword, n);
+  }
+
+  void formal_derivative(std::vector<Additive> &cos, size_t size) {
+    auto swallow = [&](size_t j, size_t offset) {
+      const auto index = j + offset;
+      const auto in_range = index < cos.size();
+      cos[j] = cos[j] ^ (in_range ? cos[index] : Additive{0});
+    };
+
+    for (size_t i = 1ull; i < size; ++i) {
+      const auto length = ((i ^ (i - 1ull)) + 1ull) >> 1ull;
+      for (size_t j = (i - length); j < i; ++j)
+        swallow(j, length);
+    }
+    auto i = size;
+    while (i < Descriptor::kFieldSize && i < cos.size()) {
+      for (size_t j = 0ull; j < size; ++j)
+        swallow(j, i);
+      i = (i << 1ull);
+    }
+  }
 
   void encodeLow(const std::vector<Additive> &data, size_t k,
                  std::vector<Additive> &codeword, size_t n) const {
