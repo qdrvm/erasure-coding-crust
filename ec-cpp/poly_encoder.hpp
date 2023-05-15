@@ -85,10 +85,10 @@ template <typename TDescriptor> struct PolyEncoder final {
   /// [101...001] erasures are bit-array representation, where 1 - is empty and
   /// 0 - is full.
   template <typename Shard>
-  void eval_error_polynomial(const std::vector<Shard> &erasure, size_t gap,
-                             std::array<typename TDescriptor::Multiplier,
-                                        TDescriptor::kFieldSize> &log_walsh2,
-                             size_t n) const {
+  void evalErrorPolynomial(const std::vector<Shard> &erasure, size_t gap,
+                           std::array<typename TDescriptor::Multiplier,
+                                      TDescriptor::kFieldSize> &log_walsh2,
+                           size_t n) const {
     auto is_erasured = [&](size_t i) -> bool {
       return i >= erasure.size() || erasure[i].empty();
     };
@@ -113,7 +113,7 @@ template <typename TDescriptor> struct PolyEncoder final {
   }
 
   template <typename Shard>
-  Result<bool> reconstruct_sub(
+  Result<bool> reconstructSub(
       std::vector<uint8_t> &recovered_bytes,
       std::vector<Additive<Descriptor>> &codeword,
       const std::vector<Shard> &erasures, size_t gap, size_t n, size_t k,

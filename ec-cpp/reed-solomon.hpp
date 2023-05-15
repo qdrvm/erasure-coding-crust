@@ -108,8 +108,8 @@ template <typename TPolyEncoder> struct ReedSolomon final {
                TPolyEncoder::Descriptor::kFieldSize>
         error_poly_in_log = {0};
 
-    poly_enc_.eval_error_polynomial(received_shards, gap, error_poly_in_log,
-                                    TPolyEncoder::Descriptor::kFieldSize);
+    poly_enc_.evalErrorPolynomial(received_shards, gap, error_poly_in_log,
+                                  TPolyEncoder::Descriptor::kFieldSize);
     const auto shard_len_in_syms = *first_shard_len;
 
     std::vector<uint8_t> acc;
@@ -134,8 +134,8 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       }
 
       assert(decoding_run.size() + gap == n_);
-      auto result = poly_enc_.reconstruct_sub(
-          acc, decoding_run, received_shards, gap, n_, k_, error_poly_in_log);
+      auto result = poly_enc_.reconstructSub(acc, decoding_run, received_shards,
+                                             gap, n_, k_, error_poly_in_log);
       assert(!resultHasError(result));
     }
     return acc;
