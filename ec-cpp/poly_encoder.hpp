@@ -260,7 +260,7 @@ template <typename TDescriptor> struct PolyEncoder final {
           &error_poly) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
-    assert(codeword.size() == n);
+    assert(codeword.size() + gap == n);
     assert(k <= n / 2);
 
     const auto recover_up_to = k;
@@ -271,7 +271,6 @@ template <typename TDescriptor> struct PolyEncoder final {
       if (idx < recovered.size())
         recovered[idx] = codeword[idx];
 
-    assert(codeword.size() == n);
     decode_main(codeword, recover_up_to, erasures, gap, error_poly, n);
 
     for (size_t idx = 0ull; idx < recover_up_to; ++idx)
@@ -300,15 +299,16 @@ private:
                    const std::array<typename Descriptor::Multiplier,
                                     Descriptor::kFieldSize> &log_walsh2,
                    size_t n) const {
-    assert(codeword.size() == n);
+    assert(codeword.size() + gap == n);
     assert(n >= recover_up_to);
     assert(erasure.size() + gap == n);
 
-    for (size_t i = 0ull; i < n; ++i)
-      codeword[i] = (i >= erasure.size() || erasure[i].empty())
+    for (size_t i = 0ull; i < codeword.size(); ++i)
+      codeword[i] = erasure[i].empty()
                         ? Additive{0}
                         : codeword[i].mul(log_walsh2[i], descriptor_.kTables);
 
+    codeword.resize(codeword.size() + gap);
     AFFT.inverse_afft(codeword.data(), n, 0, descriptor_.kTables);
     tweaked_formal_derivative(codeword, n);
 

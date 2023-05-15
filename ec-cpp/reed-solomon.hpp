@@ -116,7 +116,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
 
     thread_local std::vector<typename TPolyEncoder::Additive> decoding_run;
     decoding_run.clear();
-    decoding_run.reserve(n_);
+    decoding_run.reserve(received_shards.size());
 
     for (size_t i = 0; i < shard_len_in_syms; ++i) {
       decoding_run.clear();
@@ -130,10 +130,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
                   &s[i * sizeof(typename TPolyEncoder::Descriptor::Elt)])});
       }
 
-      for (size_t l = 0; l < gap; ++l)
-        decoding_run.emplace_back(typename TPolyEncoder::Additive{0});
-
-      assert(decoding_run.size() == n_);
+      assert(decoding_run.size() + gap == n_);
       auto result = poly_enc_.reconstruct_sub(
           acc, decoding_run, received_shards, gap, n_, k_, error_poly_in_log);
       assert(!resultHasError(result));
