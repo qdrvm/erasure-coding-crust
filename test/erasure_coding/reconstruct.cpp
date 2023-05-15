@@ -78,10 +78,18 @@ TEST(erasure_coding, Cpp_Encode) {
 
 TEST(erasure_coding, Cpp_Decode) {
   std::string_view test[]{
-      test_data
-      };
+      test_data,
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "l;n4ou98uiqwp2j3mrtlknmeswlkjf p9o87q90p u2p45j243o56u9uyew98fuqw",
+      "1"};
 
   for (auto const &t : test) {
+    ChunksList out{};
+    EXPECT_TRUE(createTestChunks(t, out).tag == NPRSResult_Tag::NPRS_RESULT_OK);
+
     auto enc_create_result = ec_cpp::create(n_validators);
     ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
 
@@ -91,11 +99,21 @@ TEST(erasure_coding, Cpp_Decode) {
     ASSERT_EQ(ec_cpp::resultHasError(enc_result), false);
 
     auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
+    ASSERT_EQ(result_data.size(), out.count);
+
+    DataBlock data{};
+    EXPECT_TRUE(ECCR_reconstruct(n_validators, &out, &data).tag ==
+                NPRSResult_Tag::NPRS_RESULT_OK);
+
     auto decode_result = encoder.reconstruct(result_data);
     ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
 
     auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
-    ASSERT_EQ(t.size(), decoded.size());
+    ASSERT_EQ(data.length, decoded.size());
+
+    for (size_t i = 0; i < data.length; ++i) {
+      ASSERT_EQ(data.array[i], decoded[i]);
+    }
   }
 }
 

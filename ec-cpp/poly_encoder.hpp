@@ -265,7 +265,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     assert(k <= n / 2);
 
     const auto recover_up_to = k;
-    thread_local std::vector<Additive> recovered;
+    std::vector<Additive> recovered;
     recovered.assign(recover_up_to, Additive{0});
 
     /// TODO(iceseer): try to remove
@@ -276,7 +276,7 @@ template <typename TDescriptor> struct PolyEncoder final {
       if (idx < recovered.size()) {
         recovered[idx] = value;
       }
-      codeword[idx] = value;
+      codeword.emplace_back(value);
     }
 
     assert(codeword.size() == n);
