@@ -229,9 +229,9 @@ template <typename TDescriptor> struct PolyEncoder final {
                              std::array<typename TDescriptor::Multiplier,
                                         TDescriptor::kFieldSize> &log_walsh2,
                              size_t n) const {
-      auto is_erasured = [&](size_t i) -> bool {
-          return i >= erasure.size() || erasure[i].empty();
-      };
+    auto is_erasured = [&](size_t i) -> bool {
+      return i >= erasure.size() || erasure[i].empty();
+    };
 
     const auto z = std::min(n, erasure.size() + gap);
     for (size_t i = 0; i < z; ++i)

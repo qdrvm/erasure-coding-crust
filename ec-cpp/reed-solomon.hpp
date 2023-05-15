@@ -86,7 +86,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
 
   Result<std::vector<uint8_t>>
   reconstruct(std::vector<Shard> &received_shards) {
-     const auto gap = math::sat_sub_unsigned(n_, received_shards.size());
+    const auto gap = math::sat_sub_unsigned(n_, received_shards.size());
 
     size_t existential_count(0ull);
     std::optional<size_t> first_shard_len;
@@ -115,8 +115,8 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     acc.reserve(shard_len_in_syms * 2ull * k_);
 
     thread_local std::vector<typename TPolyEncoder::Additive> decoding_run;
-      decoding_run.clear();
-      decoding_run.reserve(n_);
+    decoding_run.clear();
+    decoding_run.reserve(n_);
 
     for (size_t i = 0; i < shard_len_in_syms; ++i) {
       decoding_run.clear();
@@ -131,7 +131,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       }
 
       for (size_t l = 0; l < gap; ++l)
-          decoding_run.emplace_back(typename TPolyEncoder::Additive{0});
+        decoding_run.emplace_back(typename TPolyEncoder::Additive{0});
 
       assert(decoding_run.size() == n_);
       auto result = poly_enc_.reconstruct_sub(
