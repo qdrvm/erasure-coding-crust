@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <type_traits>
 
+static_assert(sizeof(size_t) == 8ull, "Math available for x86-64");
+
 namespace ec_cpp::math {
 
 inline size_t log2(size_t x) {
