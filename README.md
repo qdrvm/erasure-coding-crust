@@ -31,4 +31,9 @@ Reed-Solomon Erasure Codes](https://www.citi.sinica.edu.tw/papers/whc/4454-F.pdf
 
 Header with comments will be generated in `build/include/erasure_coding/erasure_coding.h`.
 
+## Performance
+
+AMD Ryzen 5950x, 32Gb RAM, under VM
+![Measure_0](https://imgur.com/7xqsEQT.png)
+
 ## Examples
