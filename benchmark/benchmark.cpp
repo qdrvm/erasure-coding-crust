@@ -32,7 +32,21 @@ public:
 };
 
 void Cpp_Measures() {
-  std::string_view test[]{
+  std::string test_data;
+  //for (auto &test)
+  test_data.reserve(1ull * 1024ull * 1024ull);
+
+    for (size_t i = 0; i < test_data.capacity(); ++i)
+        test_data += char(97 + (i % 24));
+
+  std::string_view test[]{"1", std::string_view{test_data},
+        "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu ",
       "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
       "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
       "h4123hty t90y1982u95yu "
@@ -88,11 +102,10 @@ void Cpp_Measures() {
 
   constexpr size_t kMeasureCount = 100ull;
 
-  {
+    for (auto const &t : test) {{
     std::chrono::microseconds measured_enc{};
     std::chrono::microseconds measured_dec{};
 
-    for (auto const &t : test) {
       for (size_t i = 0ull; i < kMeasureCount; ++i) {
         uint64_t enc_time, dec_time;
         DataBlock data{.array = (uint8_t *)t.data(), .length = t.size()};
@@ -101,17 +114,15 @@ void Cpp_Measures() {
         measured_enc += std::chrono::microseconds(enc_time);
         measured_dec += std::chrono::microseconds(dec_time);
       }
-    }
+    std::cout << "~~~ [ Benchmark case: " << t.size() << " bytes ] ~~~" << std::endl;
     std::cout << "Encode RUST (" << kMeasureCount
               << " cycles): " << measured_enc.count() << " us" << std::endl;
     std::cout << "Decode RUST (" << kMeasureCount
               << " cycles): " << measured_dec.count() << " us" << std::endl;
-  }
-
-  {
+    }
+    {
     std::chrono::microseconds measured_enc{};
     std::chrono::microseconds measured_dec{};
-    for (auto const &t : test) {
       for (size_t i = 0ull; i < kMeasureCount; ++i) {
         auto enc_create_result = ec_cpp::create(n_validators);
         auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
@@ -130,12 +141,12 @@ void Cpp_Measures() {
           decoded = encoder.reconstruct(shards);
           measured_dec += m.toc();
         }
-      }
     }
     std::cout << "Encode C++ (" << kMeasureCount
               << " cycles): " << measured_enc.count() << " us" << std::endl;
     std::cout << "Decode C++ (" << kMeasureCount
-              << " cycles): " << measured_dec.count() << " us" << std::endl;
+              << " cycles): " << measured_dec.count() << " us" << std::endl << std::endl;
+    }
   }
 }
 
