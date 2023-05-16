@@ -2,8 +2,7 @@ use novelpoly::f2e16::AFFT;
 use novelpoly::{CodeParams, WrappedShard};
 use std::os::raw::c_ulong;
 use std::slice;
-use std::time::{Duration, Instant};
-use std::thread::sleep;
+use std::time::{Instant};
 
 const MAX_VALIDATORS: usize = novelpoly::f2e16::FIELD_SIZE;
 
@@ -179,7 +178,6 @@ pub unsafe extern "C" fn ECCR_Test_MeasurePerformance(
     n_validators: c_ulong,
     usEncoding: Option<&mut c_ulong>,
     usDecoding: Option<&mut c_ulong>,
-    output: *mut ChunksList,
 ) -> NPRSResult {
     let message = if let Some(message) = message {
         message
@@ -199,40 +197,13 @@ pub unsafe extern "C" fn ECCR_Test_MeasurePerformance(
             let shards = rs
                 .encode::<WrappedShard>(&encoded[..])
                 .expect("Payload non-empty, shard sizes are uniform, and validator numbers checked; qed");
-            //sleep(Duration::new(0, 1));
             let end = Instant::now();
-
-            //let d = end.duration_since(start);
-            //let start = start.elapsed().as_micros();
-            //let end = end.elapsed().as_micros();
-            //let q = end - start;
             (end.duration_since(start), shards)
         };
 
-        let shards2 = shards.clone();
-        let mut output_chunks = vec![];
-        for (index, name) in shards.into_iter().enumerate() {
-            let mut v = name.into_inner();
-            let db = DataBlock {
-                array: v.as_mut_ptr(),
-                length: v.len() as _,
-            };
-            let chunk = Chunk {
-                data: db,
-                index: index as _,
-            };
-            std::mem::forget(v);
-            output_chunks.push(chunk);
-        }
-    
-        let o = std::mem::transmute::<*mut ChunksList, &mut ChunksList>(output);
-        o.data = output_chunks.as_mut_ptr();
-        o.count = output_chunks.len() as _;
-        std::mem::forget(output_chunks);
-    
         let dec = {
             let rs = params.make_encoder();
-            let shards = shards2.into_iter().map(|ws| Some(ws)).collect::<Vec<Option<_>>>();
+            let shards = shards.into_iter().map(|ws| Some(ws)).collect::<Vec<Option<_>>>();
             let now = Instant::now();
             let payload_bytes = rs.reconstruct(shards).unwrap();
             let new_now = Instant::now();
