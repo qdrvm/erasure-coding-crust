@@ -53,12 +53,8 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     const auto validator_count = wanted_n_;
     const auto k2 = k_ * 2;
 
-    thread_local std::vector<Shard> shards;
-    shards.clear();
-    shards.reserve(validator_count);
-
-    for (size_t ix = 0; ix < validator_count; ++ix)
-      shards.emplace_back(shard_len);
+    std::vector<Shard> shards;
+    shards.assign(validator_count, Shard(shard_len));
 
     for (size_t i = 0ull; i < bytes.size(); i += k2) {
       const size_t chunk_idx = i / k2;
