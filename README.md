@@ -16,7 +16,8 @@ Reed-Solomon Erasure Codes](https://www.citi.sinica.edu.tw/papers/whc/4454-F.pdf
 3. Options;
    - `-DTESTING=[ON|OFF]` - enable or disable build of tests.
    - `-DCMAKE_BUILD_TYPE=[Release|Debug]` - select build type.
-   - `-DBUILD_SHARED_LIBS=[TRUE|FALSE]` - build shared/static library. 
+   - `-DBUILD_SHARED_LIBS=[TRUE|FALSE]` - build shared/static library.
+   - `-DBENCHMARK=[ON|OFF]` - build benchmark/benchmark project
    
    ```bash
    cmake .. -DCMAKE_BUILD_TYPE=Release

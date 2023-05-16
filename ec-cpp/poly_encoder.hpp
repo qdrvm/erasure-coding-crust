@@ -8,11 +8,11 @@
 #include <array>
 #include <assert.h>
 #include <cstdint>
+#include <cstring>
 #include <optional>
 #include <stdlib.h>
 #include <tuple>
 #include <vector>
-#include <cstring>
 
 #include "additive_fft.hpp"
 #include "errors.hpp"
