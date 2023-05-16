@@ -2,7 +2,7 @@ use novelpoly::f2e16::AFFT;
 use novelpoly::{CodeParams, WrappedShard};
 use std::os::raw::c_ulong;
 use std::slice;
-use std::time::{Instant};
+use std::time::Instant;
 
 const MAX_VALIDATORS: usize = novelpoly::f2e16::FIELD_SIZE;
 
@@ -157,14 +157,13 @@ pub unsafe extern "C" fn ECCR_deallocate_chunk_list(chunk_list: *mut ChunksList)
 /// Works only up to 65536 samples.
 #[allow(unused_attributes)]
 #[no_mangle]
-pub unsafe extern "C" fn ECCR_AFFT_Table(
-    output: *mut [u16; 65535],
-) -> NPRSResult {
+pub unsafe extern "C" fn ECCR_AFFT_Table(output: *mut [u16; 65535]) -> NPRSResult {
     let f = &AFFT;
     let qqq = f.skews.clone();
 
     assert_eq!((*output).len(), qqq.len());
-    let s = std::mem::transmute::<&[novelpoly::f2e16::Multiplier; 65535], *const [u16; 65535]>(&qqq);
+    let s =
+        std::mem::transmute::<&[novelpoly::f2e16::Multiplier; 65535], *const [u16; 65535]>(&qqq);
 
     *output = *s;
     NPRSResult::Ok
@@ -185,36 +184,38 @@ pub unsafe extern "C" fn ECCR_Test_MeasurePerformance(
         return NPRSResult::BadPayload;
     };
 
-        let encoded = slice::from_raw_parts(message.array, message.length as usize);
-        let params = match code_params(n_validators as usize) {
-            Ok(p) => p,
-            Err(e) => return e,
-        };
+    let encoded = slice::from_raw_parts(message.array, message.length as usize);
+    let params = match code_params(n_validators as usize) {
+        Ok(p) => p,
+        Err(e) => return e,
+    };
 
-        let (enc, shards) = {
-            let start = Instant::now();
-            let rs = params.make_encoder();
-            let shards = rs
-                .encode::<WrappedShard>(&encoded[..])
-                .expect("Payload non-empty, shard sizes are uniform, and validator numbers checked; qed");
-            let end = Instant::now();
-            (end.duration_since(start), shards)
-        };
+    let (enc, shards) = {
+        let rs = params.make_encoder();
+        let start = Instant::now();
+        let shards = rs.encode::<WrappedShard>(&encoded[..]).expect(
+            "Payload non-empty, shard sizes are uniform, and validator numbers checked; qed",
+        );
+        let end = Instant::now();
+        (end.duration_since(start), shards)
+    };
 
-        let dec = {
-            let rs = params.make_encoder();
-            let shards = shards.into_iter().map(|ws| Some(ws)).collect::<Vec<Option<_>>>();
-            let now = Instant::now();
-            let payload_bytes = rs.reconstruct(shards).unwrap();
-            let new_now = Instant::now();
-            new_now.duration_since(now)
-        };
+    let dec = {
+        let rs = params.make_encoder();
+        let shards = shards
+            .into_iter()
+            .map(|ws| Some(ws))
+            .collect::<Vec<Option<_>>>();
+        let now = Instant::now();
+        let payload_bytes = rs.reconstruct(shards).unwrap();
+        let new_now = Instant::now();
+        new_now.duration_since(now)
+    };
 
     usEncoding.map(|val| *val = enc.as_micros() as u64);
     usDecoding.map(|val| *val = dec.as_micros() as u64);
     NPRSResult::Ok
 }
-
 
 /// Obtain erasure-coded chunks, one for each validator.
 ///
