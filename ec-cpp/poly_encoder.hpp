@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <tuple>
 #include <vector>
+#include <cstring>
 
 #include "additive_fft.hpp"
 #include "errors.hpp"
