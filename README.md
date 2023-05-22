@@ -31,9 +31,20 @@ Reed-Solomon Erasure Codes](https://www.citi.sinica.edu.tw/papers/whc/4454-F.pdf
 
 Header with comments will be generated in `build/include/erasure_coding/erasure_coding.h`.
 
-## Performance
+## Performance (Rust vs. C++)
 
+During performance benchmarks we generate arbitrary data of various sizes and check its encoding and decoding durations comparing Rust and C++ implementations
+
+### Reference hardware
 AMD Ryzen 5950x, 32Gb RAM, under VM
-![Measure_0](https://imgur.com/7xqsEQT.png)
 
-## Examples
+### Command
+
+```
+cd build
+make benchmark
+./benchmark/benchmark
+```
+
+### Results
+![Measure_0](https://imgur.com/7xqsEQT.png)
