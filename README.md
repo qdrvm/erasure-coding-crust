@@ -34,6 +34,42 @@ Header with comments will be generated in `build/include/erasure_coding/erasure_
 ## Performance
 
 AMD Ryzen 5950x, 32Gb RAM, under VM
-![Measure_0](https://imgur.com/7xqsEQT.png)
+```
+~~~ [ Benchmark case: 15 bytes ] ~~~
+Encode RUST (100 cycles): 4 us
+Decode RUST (100 cycles): 78.775 ms
+Encode C++ (100 cycles): 4 us
+Decode C++ (100 cycles): 41.968 ms
+
+~~~ [ Benchmark case: 300 bytes ] ~~~
+Encode RUST (100 cycles): 735 us
+Decode RUST (100 cycles): 80.181 ms
+Encode C++ (100 cycles): 277 us
+Decode C++ (100 cycles): 42.517 ms
+
+~~~ [ Benchmark case: 5000 bytes ] ~~~
+Encode RUST (100 cycles): 12.815 ms
+Decode RUST (100 cycles): 97.648 ms
+Encode C++ (100 cycles): 4782 us
+Decode C++ (100 cycles): 51.095 ms
+
+~~~ [ Benchmark case: 100000 bytes ] ~~~
+Encode RUST (100 cycles): 251.146 ms
+Decode RUST (100 cycles): 422.756 ms
+Encode C++ (100 cycles): 100.051 ms
+Decode C++ (100 cycles): 220.24 ms
+
+~~~ [ Benchmark case: 1000000 bytes ] ~~~
+Encode RUST (100 cycles): 2526.03 ms
+Decode RUST (100 cycles): 3501.28 ms
+Encode C++ (100 cycles): 987.493 ms
+Decode C++ (100 cycles): 1770.36 ms
+
+~~~ [ Benchmark case: 10000000 bytes ] ~~~
+Encode RUST (100 cycles): 25.1685 s
+Decode RUST (100 cycles): 34.4632 s
+Encode C++ (100 cycles): 9.71128 s
+Decode C++ (100 cycles): 17.5619 s
+```
 
 ## Examples

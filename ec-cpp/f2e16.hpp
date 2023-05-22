@@ -1,6 +1,7 @@
-//
-// Created by iceseer on 5/4/23.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_F2E16_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_F2E16_HPP
@@ -22,6 +23,7 @@
 namespace ec_cpp {
 
 struct f2e16_Descriptor {
+  /// @brief element type of the field
   using Elt = uint16_t;
   using Wide = uint32_t;
   using Multiplier = Elt;

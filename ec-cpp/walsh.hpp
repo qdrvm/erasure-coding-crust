@@ -1,6 +1,7 @@
-//
-// Created by iceseer on 5/11/23.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_WALSH_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_WALSH_HPP
@@ -17,18 +18,15 @@ constexpr void walsh(std::array<typename TDescriptor::Multiplier,
   const auto size = data.size();
   size_t depart_no = 1ull;
 
+  using WideT = typename TDescriptor::Wide;
   while (depart_no < size) {
     size_t j = 0ull;
     const auto depart_no_next = (depart_no << 1ull);
     while (j < size) {
       for (size_t i = j; i < (depart_no + j); ++i) {
-        const auto mask = typename TDescriptor::Wide(TDescriptor::kOneMask);
-        const typename TDescriptor::Wide tmp2 =
-            typename TDescriptor::Wide(data[i]) + mask -
-            typename TDescriptor::Wide(data[i + depart_no]);
-        const typename TDescriptor::Wide tmp1 =
-            typename TDescriptor::Wide(data[i]) +
-            typename TDescriptor::Wide(data[i + depart_no]);
+        const auto mask = WideT(TDescriptor::kOneMask);
+        const WideT tmp2 = WideT(data[i]) + mask - WideT(data[i + depart_no]);
+        const WideT tmp1 = WideT(data[i]) + WideT(data[i + depart_no]);
         data[i] = typename TDescriptor::Multiplier(
             (tmp1 & mask) + (tmp1 >> TDescriptor::kFieldBits));
         data[i + depart_no] = typename TDescriptor::Multiplier(

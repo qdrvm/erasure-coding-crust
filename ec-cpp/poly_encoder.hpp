@@ -1,6 +1,7 @@
-//
-// Created by iceseer on 5/11/23.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_POLY_ENCODER_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_POLY_ENCODER_HPP
@@ -24,10 +25,11 @@ namespace ec_cpp {
 
 template <typename TDescriptor> struct PolyEncoder final {
   using Descriptor = TDescriptor;
+  using Field = std::vector<Additive<Descriptor>>;
   PolyEncoder(const Descriptor &descriptor) : descriptor_{descriptor} {}
 
-  Result<bool> encodeSub(std::vector<Additive<Descriptor>> &codeword,
-                         Slice<uint8_t> bytes, size_t n, size_t k) const {
+  Result<bool> encodeSub(Field &codeword, Slice<uint8_t> bytes, size_t n,
+                         size_t k) const {
     assert(math::isPowerOf2(n));
     assert(math::isPowerOf2(k));
     assert(bytes.size() <= (k << 1));
@@ -115,8 +117,7 @@ template <typename TDescriptor> struct PolyEncoder final {
 
   template <typename Shard>
   Result<bool> reconstructSub(
-      std::vector<uint8_t> &recovered_bytes,
-      std::vector<Additive<Descriptor>> &codeword,
+      std::vector<uint8_t> &recovered_bytes, Field &codeword,
       const std::vector<Shard> &erasures, size_t gap, size_t n, size_t k,
       const std::array<typename Descriptor::Multiplier, Descriptor::kFieldSize>
           &error_poly) const {
@@ -145,7 +146,7 @@ template <typename TDescriptor> struct PolyEncoder final {
     for (size_t i = 0; i < k; ++i)
       Descriptor::toBEBytes(
           &recovered_bytes[was + i * sizeof(typename Descriptor::Elt)],
-          local()[i]._0);
+          local()[i].point_0);
 
     return true;
   }
@@ -155,15 +156,14 @@ private:
   const AdditiveFFT<Descriptor> AFFT{
       AdditiveFFT<Descriptor>::initalize(descriptor_.kTables)};
 
-  std::vector<Additive<Descriptor>> &local() const {
-    thread_local std::vector<Additive<Descriptor>> data;
+  Field &local() const {
+    thread_local Field data;
     return data;
   }
 
   template <typename Shard>
-  void decode_main(std::vector<Additive<Descriptor>> &codeword,
-                   size_t recover_up_to, const std::vector<Shard> &erasure,
-                   size_t gap,
+  void decode_main(Field &codeword, size_t recover_up_to,
+                   const std::vector<Shard> &erasure, size_t gap,
                    const std::array<typename Descriptor::Multiplier,
                                     Descriptor::kFieldSize> &log_walsh2,
                    size_t n) const {
@@ -188,18 +188,17 @@ private:
                         : Additive<Descriptor>{0};
   }
 
-  void tweaked_formal_derivative(std::vector<Additive<Descriptor>> &codeword,
-                                 size_t n) const {
+  void tweaked_formal_derivative(Field &codeword, size_t n) const {
     formal_derivative(codeword, n);
   }
 
-  void formal_derivative(std::vector<Additive<Descriptor>> &cos,
-                         size_t size) const {
+  void formal_derivative(Field &cos, size_t size) const {
     auto swallow = [&](size_t j, size_t offset) {
       const auto index = j + offset;
       const auto in_range = index < cos.size();
-      cos[j]._0 =
-          cos[j]._0 ^ (in_range ? cos[index]._0 : typename Descriptor::Elt(0));
+      cos[j].point_0 =
+          cos[j].point_0 ^
+          (in_range ? cos[index].point_0 : typename Descriptor::Elt(0));
     };
 
     for (size_t i = 1ull; i < size; ++i) {
@@ -215,8 +214,7 @@ private:
     }
   }
 
-  void encodeLow(const std::vector<Additive<Descriptor>> &data, size_t k,
-                 std::vector<Additive<Descriptor>> &codeword, size_t n) const {
+  void encodeLow(const Field &data, size_t k, Field &codeword, size_t n) const {
     assert(k + k <= n);
     assert(codeword.size() == n);
     assert(data.size() == n);

@@ -1,11 +1,11 @@
-//
-// Created by iceseer on 5/4/23.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_MATH_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_MATH_HPP
 
-#include <assert.h>
 #include <limits>
 #include <stdlib.h>
 #include <type_traits>
@@ -35,10 +35,11 @@ inline size_t nextLowPowerOf2(size_t k) {
   return (1ull << p);
 }
 
+/// @brief https://doc.rust-lang.org/std/intrinsics/fn.saturating_sub.html
 template <typename T> inline constexpr T sat_sub_unsigned(T x, T y) {
   static_assert(std::numeric_limits<T>::is_integer &&
                     !std::numeric_limits<T>::is_signed,
-                "Value must be integer and unsigned!");
+                "Value must be an unsigned integer!");
   auto res = x - y;
   res &= -(res <= x);
   return res;
