@@ -7,8 +7,9 @@ if (CCACHE_FOUND)
 endif (CCACHE_FOUND)
 
 option(TESTING "Enable tests" OFF)
+option(BENCHMARK "Enable benchmark" OFF)
 
-if (TESTING)
+if (TESTING OR BENCHMARK)
   include("cmake/3rdparty/Hunter/init.cmake")
   HunterGate(
       URL "https://github.com/soramitsu/soramitsu-hunter/archive/v0.23.257-soramitsu18.tar.gz"
@@ -31,8 +32,12 @@ if (NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif ()
 
-
+add_subdirectory(ec-cpp)
 if (TESTING)
   enable_testing()
   add_subdirectory(test)
+endif ()
+
+if (BENCHMARK)
+  add_subdirectory(benchmark)
 endif ()
