@@ -158,12 +158,11 @@ pub unsafe extern "C" fn ECCR_deallocate_chunk_list(chunk_list: *mut ChunksList)
 #[allow(unused_attributes)]
 #[no_mangle]
 pub unsafe extern "C" fn ECCR_AFFT_Table(output: *mut [u16; 65535]) -> NPRSResult {
-    let f = &AFFT;
-    let qqq = f.skews.clone();
+    let skews = AFFT.skews.clone();
+    assert_eq!((*output).len(), skews.len());
 
-    assert_eq!((*output).len(), qqq.len());
     let s =
-        std::mem::transmute::<&[novelpoly::f2e16::Multiplier; 65535], *const [u16; 65535]>(&qqq);
+        std::mem::transmute::<&[novelpoly::f2e16::Multiplier; 65535], *const [u16; 65535]>(&skews);
 
     *output = *s;
     NPRSResult::Ok

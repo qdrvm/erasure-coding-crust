@@ -1,6 +1,7 @@
-//
-// Created by iceseer on 5/10/23.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_ADDITIVE_FFT_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_ADDITIVE_FFT_HPP
@@ -9,21 +10,21 @@ namespace ec_cpp {
 
 template <typename TDescriptor> struct Additive {
   using Descriptor = TDescriptor;
-  typename Descriptor::Elt _0;
+  typename Descriptor::Elt point_0;
 
   typename Descriptor::Multiplier
   toMultiplier(const typename Descriptor::Tables &tables) const {
     const auto &log_table = std::get<0>(tables);
-    return typename Descriptor::Multiplier(log_table[size_t(_0)]);
+    return typename Descriptor::Multiplier(log_table[size_t(point_0)]);
   }
 
   Additive mul(typename Descriptor::Multiplier other,
                const typename Descriptor::Tables &tables) {
-    if (_0 == typename Descriptor::Elt(0))
+    if (point_0 == typename Descriptor::Elt(0))
       return Additive{0};
 
     const auto &[log_table, exp_table, _] = tables;
-    const auto log = (typename Descriptor::Wide(log_table[size_t(_0)])) +
+    const auto log = (typename Descriptor::Wide(log_table[size_t(point_0)])) +
                      typename Descriptor::Wide(other);
     const auto offset =
         (log & typename Descriptor::Wide(Descriptor::kOneMask)) +
@@ -58,7 +59,7 @@ template <typename TDescriptor> struct AdditiveFFT {
         auto j = (1ull << m) - 1ull;
         while (j < s) {
           skews_additive[j + s] = Additive<Descriptor>{
-              typename Descriptor::Elt(skews_additive[j]._0 ^ base[i])};
+              typename Descriptor::Elt(skews_additive[j].point_0 ^ base[i])};
           j += step;
         }
       }
@@ -77,7 +78,7 @@ template <typename TDescriptor> struct AdditiveFFT {
             typename Descriptor::Wide(Descriptor::kOneMask);
         base[i] = Additive<Descriptor>{base[i]}
                       .mul(typename Descriptor::Multiplier(b), tables)
-                      ._0;
+                      .point_0;
       }
     }
 
@@ -102,13 +103,14 @@ template <typename TDescriptor> struct AdditiveFFT {
       size_t j(depart_no);
       while (j < size) {
         for (size_t i = (j - depart_no); i < j; ++i)
-          data[i + depart_no]._0 = (data[i + depart_no]._0 ^ data[i]._0);
+          data[i + depart_no].point_0 =
+              (data[i + depart_no].point_0 ^ data[i].point_0);
 
         const auto skew = skews[j + index - 1ull];
         if (skew != Descriptor::kOneMask)
           for (size_t i = (j - depart_no); i < j; ++i)
-            data[i]._0 =
-                (data[i]._0 ^ data[i + depart_no].mul(skew, tables)._0);
+            data[i].point_0 = (data[i].point_0 ^
+                               data[i + depart_no].mul(skew, tables).point_0);
 
         j += (depart_no << 1ull);
       }
@@ -125,10 +127,12 @@ template <typename TDescriptor> struct AdditiveFFT {
         const auto skew = skews[j + index - 1ull];
         if (skew != Descriptor::kOneMask)
           for (size_t i = (j - depart_no); i < j; ++i)
-            data[i]._0 = data[i]._0 ^ data[i + depart_no].mul(skew, tables)._0;
+            data[i].point_0 =
+                data[i].point_0 ^ data[i + depart_no].mul(skew, tables).point_0;
 
         for (size_t i = (j - depart_no); i < j; ++i)
-          data[i + depart_no]._0 = data[i + depart_no]._0 ^ data[i]._0;
+          data[i + depart_no].point_0 =
+              data[i + depart_no].point_0 ^ data[i].point_0;
 
         j += (depart_no << 1ull);
       }

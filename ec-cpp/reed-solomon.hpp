@@ -1,6 +1,7 @@
-//
-// Created by iceseer on 5/4/23.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_REED_SOLOMON_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_REED_SOLOMON_HPP
@@ -71,7 +72,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       }
       for (size_t val_idx = 0ull; val_idx < validator_count; ++val_idx) {
         auto &shard = shards[val_idx];
-        const auto src = local()[val_idx]._0;
+        const auto src = local()[val_idx].point_0;
         TPolyEncoder::Descriptor::toBEBytes((uint8_t *)&shard[chunk_idx * 2ull],
                                             src);
       }
@@ -80,7 +81,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
   }
 
   Result<std::vector<uint8_t>>
-  reconstruct(std::vector<Shard> &received_shards) {
+  reconstruct(const std::vector<Shard> &received_shards) {
     const auto gap = math::sat_sub_unsigned(n_, received_shards.size());
 
     size_t existential_count(0ull);
