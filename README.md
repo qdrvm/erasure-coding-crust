@@ -31,8 +31,20 @@ Reed-Solomon Erasure Codes](https://www.citi.sinica.edu.tw/papers/whc/4454-F.pdf
 
 Header with comments will be generated in `build/include/erasure_coding/erasure_coding.h`.
 
-## Performance
+## Performance (Rust vs. C++)
 
+During performance benchmarks we generate arbitrary data of various sizes and check its encoding and decoding durations comparing Rust and C++ implementations
+
+### Command
+
+```
+cd build
+make benchmark
+./benchmark/benchmark
+```
+
+### Results
+#### Hardware
 AMD Ryzen 5950x, 32Gb RAM, under VM
 ```
 ~~~ [ Benchmark case: 15 bytes ] ~~~
@@ -72,4 +84,42 @@ Encode C++ (100 cycles): 9.71128 s
 Decode C++ (100 cycles): 17.5619 s
 ```
 
-## Examples
+Apple M1 Pro, 16Gb Ram, native
+
+```
+~~~ [ Benchmark case: 22 bytes ] ~~~
+Encode RUST (100 cycles): 124 us
+Decode RUST (100 cycles): 66.506 ms
+Encode C++ (100 cycles): 31 us
+Decode C++ (100 cycles): 26.844 ms
+
+~~~ [ Benchmark case: 303 bytes ] ~~~
+Encode RUST (100 cycles): 847 us
+Decode RUST (100 cycles): 59.614 ms
+Encode C++ (100 cycles): 612 us
+Decode C++ (100 cycles): 27.749 ms
+
+~~~ [ Benchmark case: 5007 bytes ] ~~~
+Encode RUST (100 cycles): 14.157 ms
+Decode RUST (100 cycles): 78.362 ms
+Encode C++ (100 cycles): 10.553 ms
+Decode C++ (100 cycles): 43.531 ms
+
+~~~ [ Benchmark case: 100015 bytes ] ~~~
+Encode RUST (100 cycles): 282.544 ms
+Decode RUST (100 cycles): 470.959 ms
+Encode C++ (100 cycles): 211.462 ms
+Decode C++ (100 cycles): 364.47 ms
+
+~~~ [ Benchmark case: 1000015 bytes ] ~~~
+Encode RUST (100 cycles): 2835.5 ms
+Decode RUST (100 cycles): 4204.71 ms
+Encode C++ (100 cycles): 2133.94 ms
+Decode C++ (100 cycles): 3418.58 ms
+
+~~~ [ Benchmark case: 10000015 bytes ] ~~~
+Encode RUST (100 cycles): 28.5276 s
+Decode RUST (100 cycles): 41.6977 s
+Encode C++ (100 cycles): 21.6447 s
+Decode C++ (100 cycles): 34.2825 s
+```
