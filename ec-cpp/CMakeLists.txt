@@ -1,7 +1,7 @@
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(path_prefix "${CMAKE_BINARY_DIR}/release")
+  set(path_prefix "${CMAKE_BINARY_DIR}")
 else ()
-  set(path_prefix "${CMAKE_BINARY_DIR}/debug")
+  set(path_prefix "${CMAKE_BINARY_DIR}")
 endif ()
 
 if (BUILD_SHARED_LIBS)
