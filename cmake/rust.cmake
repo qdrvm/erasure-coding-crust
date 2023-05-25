@@ -20,7 +20,6 @@ message(STATUS "[erasure_coding] library: ${lib}")
 
 set(include_path ${PROJECT_SOURCE_DIR}/include)
 set(erasure_coding_h_dir ${include_path}/erasure_coding)
-set(ec_cpp_h_dir ${include_path}/ec-cpp)
 
 ### setup tasks
 add_custom_target(
@@ -62,7 +61,6 @@ set_target_properties(erasure_coding_crust PROPERTIES
 add_dependencies(erasure_coding_crust cargo_build)
 
 file(MAKE_DIRECTORY ${erasure_coding_h_dir})
-file(MAKE_DIRECTORY ${ec_cpp_h_dir})
 
 ### add tests
 add_test(
@@ -76,10 +74,6 @@ include(GNUInstallDirs)
 
 install(
     DIRECTORY ${erasure_coding_h_dir}
-    TYPE INCLUDE
-)
-install(
-    DIRECTORY ${ec_cpp_h_dir}
     TYPE INCLUDE
 )
 install(
