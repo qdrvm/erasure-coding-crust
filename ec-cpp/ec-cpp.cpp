@@ -12,7 +12,7 @@ PolyEncoder_f2e16 poly_encoder(field_descriptor);
 
 constexpr size_t kMaxValidators = f2e16_Descriptor::kFieldSize;
 
-Result<size_t> recoveryThreshold(size_t n_validators) {
+Result<size_t> getRecoveryThreshold(size_t n_validators) {
   if (n_validators > kMaxValidators)
     return Error::kTooManyValidators;
 
@@ -25,7 +25,7 @@ Result<size_t> recoveryThreshold(size_t n_validators) {
 
 Result<ReedSolomon<PolyEncoder_f2e16>> create(size_t n_validators) {
   const auto n_wanted = n_validators;
-  auto k_wanted_result = recoveryThreshold(n_wanted);
+  auto k_wanted_result = getRecoveryThreshold(n_wanted);
   if (resultHasError(k_wanted_result))
     return resultGetError(std::move(k_wanted_result));
 
