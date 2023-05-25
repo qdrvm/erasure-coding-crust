@@ -27,6 +27,12 @@ if(NOT TARGET erasure_coding_crust::ec-cpp)
         INTERFACE_INCLUDE_DIRECTORIES ${include_path_ec_cpp}
         IMPORTED_LOCATION ${lib_path}
         )
+
+    add_custom_command(
+        TARGET erasure_coding_crust::ec-cpp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${PROJECT_SOURCE_DIR}/include/ec-cpp
+                ${include_path_ec_cpp})
 endif()
 
 if(NOT TARGET erasure_coding_crust::erasure_coding_crust)
