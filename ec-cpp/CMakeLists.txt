@@ -1,3 +1,9 @@
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(path_prefix "${CMAKE_BINARY_DIR}/release")
+else ()
+  set(path_prefix "${CMAKE_BINARY_DIR}/debug")
+endif ()
+
 if (BUILD_SHARED_LIBS)
   set(lib_ec_cpp ${path_prefix}/${CMAKE_SHARED_LIBRARY_PREFIX}ec-cpp${CMAKE_SHARED_LIBRARY_SUFFIX})
 else ()
