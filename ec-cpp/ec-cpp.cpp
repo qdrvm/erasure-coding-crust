@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "ec-cpp.hpp"
+#include "../include/ec-cpp/ec-cpp.hpp"
 
 namespace ec_cpp {
 

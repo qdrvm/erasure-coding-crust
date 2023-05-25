@@ -5,9 +5,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../../ec-cpp/f2e16.hpp"
-#include "../../ec-cpp/table_f2e16.hpp"
-#include "../ec-cpp/ec-cpp.hpp"
+#include <ec-cpp/f2e16.hpp>
+#include <ec-cpp/table_f2e16.hpp>
+#include <ec-cpp/ec-cpp.hpp>
 
 extern "C" {
 #include <erasure_coding/erasure_coding.h>
