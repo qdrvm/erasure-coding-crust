@@ -5,12 +5,18 @@ else ()
 endif ()
 
 if (BUILD_SHARED_LIBS)
-  set(lib_ec_cpp ${path_prefix}/${CMAKE_SHARED_LIBRARY_PREFIX}ec-cpp${CMAKE_SHARED_LIBRARY_SUFFIX})
+  set(lib_ec_cpp_r ${path_prefix}/${CMAKE_SHARED_LIBRARY_PREFIX}ec-cpp)
 else ()
-  set(lib_ec_cpp ${path_prefix}/${CMAKE_STATIC_LIBRARY_PREFIX}ec-cpp${CMAKE_STATIC_LIBRARY_SUFFIX})
+  set(lib_ec_cpp_d ${path_prefix}/${CMAKE_STATIC_LIBRARY_PREFIX}ec-cppd)
+endif ()
+
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(lib_ec_cpp ${lib_ec_cpp_r} ${CMAKE_SHARED_LIBRARY_SUFFIX})
+else ()
+  set(lib_ec_cpp ${lib_ec_cpp_d}${CMAKE_STATIC_LIBRARY_SUFFIX})
 endif ()
 message(STATUS "[ec-cpp] library: ${lib_ec_cpp}")
-
 
 set(include_path ${PROJECT_SOURCE_DIR}/include)
 set(ec_cpp_h_dir ${include_path}/ec-cpp)
