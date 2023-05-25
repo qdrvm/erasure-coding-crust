@@ -16,8 +16,17 @@ else()
 endif()
 
 set(include_path ${_IMPORT_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/erasure_coding)
+set(include_path_ec_cpp ${_IMPORT_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ec-cpp)
 if(NOT EXISTS ${include_path})
     message(FATAL_ERROR "erasure_coding_crust headers not found in ${include_path}!")
+endif()
+
+if(NOT TARGET erasure_coding_crust::ec-cpp)
+    add_library(erasure_coding_crust::ec-cpp STATIC IMPORTED GLOBAL)
+    set_target_properties(erasure_coding_crust::ec-cpp PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES ${include_path_ec_cpp}
+        IMPORTED_LOCATION ${lib_path}
+        )
 endif()
 
 if(NOT TARGET erasure_coding_crust::erasure_coding_crust)
@@ -58,5 +67,6 @@ unset(shared_lib_path)
 unset(static_lib_path)
 unset(lib_path)
 unset(include_path)
+unset(include_path_ec_cpp)
 
 check_required_components(erasure_coding_crust)
