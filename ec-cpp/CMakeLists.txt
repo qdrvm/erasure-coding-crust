@@ -16,5 +16,11 @@ install(
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/erasure_coding_crust
 )
 
+add_custom_command(
+    TARGET ec-cpp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${PROJECT_SOURCE_DIR}/include/ec-cpp
+            ${ec_cpp_h_dir})
+
 unset(include_path)
 unset(ec_cpp_h_dir)
