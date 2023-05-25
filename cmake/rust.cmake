@@ -62,7 +62,6 @@ add_dependencies(erasure_coding_crust cargo_build)
 
 file(MAKE_DIRECTORY ${erasure_coding_h_dir})
 
-
 ### add tests
 add_test(
     NAME cargo_test

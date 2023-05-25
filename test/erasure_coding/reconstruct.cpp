@@ -5,9 +5,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../../ec-cpp/f2e16.hpp"
-#include "../../ec-cpp/table_f2e16.hpp"
-#include "../ec-cpp/ec-cpp.hpp"
+#include <ec-cpp/ec-cpp.hpp>
+#include <ec-cpp/f2e16.hpp>
+#include <ec-cpp/table_f2e16.hpp>
 
 extern "C" {
 #include <erasure_coding/erasure_coding.h>
@@ -237,6 +237,51 @@ TEST(erasure_coding, Cpp_Math_Log2) {
 TEST(erasure_coding, Cpp_CreateChunks) {
   auto result = ec_cpp::create(8ull);
   ASSERT_EQ(ec_cpp::resultHasError(result), false);
+}
+
+TEST(erasure_coding, Cpp_RecoveryThreshold_Few) {
+  auto result = ec_cpp::getRecoveryThreshold(1);
+  ASSERT_TRUE(ec_cpp::resultHasError(result));
+  ASSERT_EQ(ec_cpp::resultGetError(std::move(result)),
+            ec_cpp::Error::kNotEnoughValidators);
+
+  size_t out;
+  ASSERT_EQ(NPRSResult_Tag::NPRS_RESULT_NOT_ENOUGH_VALIDATORS,
+            ECCR_get_recovery_threshold(1, &out).tag);
+}
+
+TEST(erasure_coding, Cpp_RecoveryThreshold_5) {
+  const size_t kCount = 5;
+  auto result = ec_cpp::getRecoveryThreshold(kCount);
+  ASSERT_FALSE(ec_cpp::resultHasError(result));
+
+  size_t out;
+  ASSERT_EQ(NPRSResult_Tag::NPRS_RESULT_OK,
+            ECCR_get_recovery_threshold(kCount, &out).tag);
+  ASSERT_EQ(out, ec_cpp::resultGetValue(std::move(result)));
+}
+
+TEST(erasure_coding, Cpp_RecoveryThreshold_100) {
+  const size_t kCount = 100;
+  auto result = ec_cpp::getRecoveryThreshold(kCount);
+  ASSERT_FALSE(ec_cpp::resultHasError(result));
+
+  size_t out;
+  ASSERT_EQ(NPRSResult_Tag::NPRS_RESULT_OK,
+            ECCR_get_recovery_threshold(kCount, &out).tag);
+  ASSERT_EQ(out, ec_cpp::resultGetValue(std::move(result)));
+}
+
+TEST(erasure_coding, Cpp_RecoveryThreshold_90000) {
+  const size_t kCount = 90000;
+  auto result = ec_cpp::getRecoveryThreshold(kCount);
+  ASSERT_TRUE(ec_cpp::resultHasError(result));
+  ASSERT_EQ(ec_cpp::resultGetError(std::move(result)),
+            ec_cpp::Error::kTooManyValidators);
+
+  size_t out;
+  ASSERT_EQ(NPRSResult_Tag::NPRS_RESULT_TOO_MANY_VALIDATORS,
+            ECCR_get_recovery_threshold(kCount, &out).tag);
 }
 
 TEST(erasure_coding, CreateChunks) {

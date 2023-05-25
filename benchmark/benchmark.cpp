@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string_view>
 
-#include "../ec-cpp/ec-cpp.hpp"
+#include <ec-cpp/ec-cpp.hpp>
 
 extern "C" {
 #include <erasure_coding/erasure_coding.h>

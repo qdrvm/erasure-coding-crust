@@ -62,7 +62,7 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       const auto end = std::min(i + k2, bytes.size());
       assert(i != end);
 
-      Slice<uint8_t> data_piece(&bytes[i], &bytes[end]);
+      Slice<uint8_t> data_piece(&bytes[i], end - i);
       assert(!data_piece.empty());
       assert(data_piece.size() <= k2);
 
