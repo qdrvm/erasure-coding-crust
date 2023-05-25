@@ -15,6 +15,18 @@ else()
     message(FATAL_ERROR "erasure_coding_crust library (${shared_lib_name} or ${static_lib_name}) not found in ${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}!")
 endif()
 
+set(shared_lib_name_ec_cpp ${CMAKE_SHARED_LIBRARY_PREFIX}ec-cpp${CMAKE_SHARED_LIBRARY_SUFFIX})
+set(shared_lib_path_ec_cpp ${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${shared_lib_name_ec_cpp})
+set(static_lib_name_ec_cpp ${CMAKE_STATIC_LIBRARY_PREFIX}erasure_coding_crust${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(static_lib_path_ec_cpp ${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${static_lib_name_ec_cpp})
+if(EXISTS ${shared_lib_path_ec_cpp})
+    set(lib_path_ec_cpp ${shared_lib_path_ec_cpp})
+elseif(EXISTS ${static_lib_path_ec_cpp})
+    set(lib_path_ec_cpp ${static_lib_path_ec_cpp})
+else()
+    message(FATAL_ERROR "ec-cpp library (${shared_lib_name_ec_cpp} or ${static_lib_name_ec_cpp}) not found in ${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}!")
+endif()
+
 set(include_path ${_IMPORT_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/erasure_coding)
 set(include_path_ec_cpp ${_IMPORT_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ec-cpp)
 if(NOT EXISTS ${include_path})
@@ -25,7 +37,7 @@ if(NOT TARGET erasure_coding_crust::ec-cpp)
     add_library(erasure_coding_crust::ec-cpp STATIC IMPORTED GLOBAL)
     set_target_properties(erasure_coding_crust::ec-cpp PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES ${include_path_ec_cpp}
-        IMPORTED_LOCATION ${lib_path}
+        IMPORTED_LOCATION ${lib_path_ec_cpp}
         )
     install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/ec-cpp" 
         DESTINATION "${_IMPORT_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ec-cpp" 
@@ -69,6 +81,11 @@ unset(static_lib_name)
 unset(shared_lib_path)
 unset(static_lib_path)
 unset(lib_path)
+unset(shared_lib_name_ec_cpp)
+unset(static_lib_name_ec_cpp)
+unset(shared_lib_path_ec_cpp)
+unset(static_lib_path_ec_cpp)
+unset(lib_path_ec_cpp)
 unset(include_path)
 unset(include_path_ec_cpp)
 
