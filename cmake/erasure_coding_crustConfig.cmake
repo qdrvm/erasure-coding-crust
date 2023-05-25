@@ -17,7 +17,7 @@ endif()
 
 set(shared_lib_name_ec_cpp ${CMAKE_SHARED_LIBRARY_PREFIX}ec-cpp${CMAKE_SHARED_LIBRARY_SUFFIX})
 set(shared_lib_path_ec_cpp ${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${shared_lib_name_ec_cpp})
-set(static_lib_name_ec_cpp ${CMAKE_STATIC_LIBRARY_PREFIX}erasure_coding_crust${CMAKE_STATIC_LIBRARY_SUFFIX})
+set(static_lib_name_ec_cpp ${CMAKE_STATIC_LIBRARY_PREFIX}ec-cpp${CMAKE_STATIC_LIBRARY_SUFFIX})
 set(static_lib_path_ec_cpp ${_IMPORT_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${static_lib_name_ec_cpp})
 if(EXISTS ${shared_lib_path_ec_cpp})
     set(lib_path_ec_cpp ${shared_lib_path_ec_cpp})
