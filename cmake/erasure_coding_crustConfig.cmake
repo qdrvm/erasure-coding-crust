@@ -27,6 +27,9 @@ if(NOT TARGET erasure_coding_crust::ec-cpp)
         INTERFACE_INCLUDE_DIRECTORIES ${include_path_ec_cpp}
         IMPORTED_LOCATION ${lib_path}
         )
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/ec-cpp" 
+        DESTINATION "${_IMPORT_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/ec-cpp" 
+        )
 endif()
 
 if(NOT TARGET erasure_coding_crust::erasure_coding_crust)
