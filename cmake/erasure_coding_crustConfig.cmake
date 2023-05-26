@@ -59,6 +59,6 @@ unset(static_lib_path)
 unset(lib_path)
 unset(include_path)
 
-include(erasure_coding_crustTargets.cmake)
+include("${CMAKE_CURRENT_LIST_DIR}/erasure_coding_crustTargets.cmake")
 
 check_required_components(erasure_coding_crust)
