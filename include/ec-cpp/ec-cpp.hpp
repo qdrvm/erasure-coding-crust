@@ -6,9 +6,9 @@
 #ifndef NOVELPOLY_REED_SOLOMON_CRUST_EC_CPP_HPP
 #define NOVELPOLY_REED_SOLOMON_CRUST_EC_CPP_HPP
 
-#include "errors.hpp"
-#include "f2e16.hpp"
-#include "reed-solomon.hpp"
+#include <ec-cpp/errors.hpp>
+#include <ec-cpp/f2e16.hpp>
+#include <ec-cpp/reed-solomon.hpp>
 
 namespace ec_cpp {
 
