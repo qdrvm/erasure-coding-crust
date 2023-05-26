@@ -16,7 +16,7 @@ endif ()
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
   set(lib_ec_cpp ${path_prefix}/${lib_prefix}ec-cpp${lib_suffix})
 else ()
-  set(lib_ec_cpp ${path_prefix}/${lib_prefix}ec-cppd${lib_suffix})
+  set(lib_ec_cpp ${path_prefix}/${lib_prefix}ec-cpp${CMAKE_DEBUG_POSTFIX}${lib_suffix})
 endif ()
 message(STATUS "[ec-cpp] library: ${lib_ec_cpp}")
 
