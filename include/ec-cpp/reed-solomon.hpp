@@ -12,9 +12,9 @@
 #include <stdlib.h>
 #include <vector>
 
-#include "errors.hpp"
-#include "math.hpp"
-#include "types.hpp"
+#include <ec-cpp/errors.hpp>
+#include <ec-cpp/math.hpp>
+#include <ec-cpp/types.hpp>
 
 namespace ec_cpp {
 

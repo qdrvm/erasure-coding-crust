@@ -41,3 +41,35 @@ endif ()
 if (BENCHMARK)
   add_subdirectory(benchmark)
 endif ()
+
+
+# TODO: Consider changing to CMake 3.23 FILE_SETs
+install(
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+export(EXPORT erasure_coding_crust_targets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/erasure_coding_crust/erasure_coding_crustTargets.cmake"
+  NAMESPACE erasure_coding_crust::
+)
+configure_file(cmake/erasure_coding_crustConfig.cmake
+  "${CMAKE_CURRENT_BINARY_DIR}/erasure_coding_crust/erasure_coding_crustConfig.cmake"
+  COPYONLY
+)
+
+set(ConfigPackageLocation lib/cmake/erasure_coding_crust)
+install(EXPORT erasure_coding_crust_targets
+  FILE
+    erasure_coding_crustTargets.cmake
+  NAMESPACE
+    erasure_coding_crust::
+  DESTINATION
+    ${ConfigPackageLocation}
+)
+install(
+  FILES
+    cmake/erasure_coding_crustConfig.cmake
+  DESTINATION
+    ${ConfigPackageLocation}
+)

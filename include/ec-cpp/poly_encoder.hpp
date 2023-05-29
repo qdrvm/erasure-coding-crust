@@ -15,11 +15,11 @@
 #include <tuple>
 #include <vector>
 
-#include "additive_fft.hpp"
-#include "errors.hpp"
-#include "math.hpp"
-#include "types.hpp"
-#include "walsh.hpp"
+#include <ec-cpp/additive_fft.hpp>
+#include <ec-cpp/errors.hpp>
+#include <ec-cpp/math.hpp>
+#include <ec-cpp/types.hpp>
+#include <ec-cpp/walsh.hpp>
 
 namespace ec_cpp {
 
