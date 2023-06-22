@@ -37,6 +37,24 @@ auto createTestChunks(ChunksList &out, uint64_t validators = n_validators) {
   return createTestChunks(test_data, out, validators);
 }
 
+TEST(erasure_coding, Cpp_Create) {
+  std::string_view test[]{
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "l;n4ou98uiqwp2j3mrtlknmeswlkjf p9o87q90p u2p45j243o56u9uyew98fuqw"};
+
+  for (auto const &t : test) {
+    ChunksList out{};
+    EXPECT_TRUE(createTestChunks(t, out, 2).tag ==
+                NPRSResult_Tag::NPRS_RESULT_OK);
+
+    auto enc_create_result = ec_cpp::create(2);
+    ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+  }
+}
+
 TEST(erasure_coding, Cpp_Encode) {
   std::string_view test[]{
       test_data,
@@ -139,6 +157,7 @@ TEST(erasure_coding, Cpp_Decode) {
       "1"};
 
   for (auto const &t : test) {
+    /// ENCODE
     ChunksList out{};
     EXPECT_TRUE(createTestChunks(t, out).tag == NPRSResult_Tag::NPRS_RESULT_OK);
 
@@ -153,11 +172,31 @@ TEST(erasure_coding, Cpp_Decode) {
     auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
     ASSERT_EQ(result_data.size(), out.count);
 
+    /// DECODE
+    using Shard = decltype(encoder)::Shard;
+    std::vector<Shard> to_decode;
+    to_decode.resize(out.count);
+    for (size_t ix = 0; ix < out.count; ++ix) {
+      auto &chunk = out.data[ix];
+      to_decode[chunk.index] =
+          Shard(chunk.data.array, &chunk.data.array[chunk.data.length]);
+    }
+
+    ChunksList out_2{};
+    out_2.data = new Chunk[result_data.size()];
+    out_2.count = result_data.size();
+    for (size_t ix = 0; ix < result_data.size(); ++ix) {
+      auto &chunk = out_2.data[ix];
+      chunk.index = ix;
+      chunk.data.array = result_data[ix].data();
+      chunk.data.length = result_data[ix].size();
+    }
+
     DataBlock data{};
-    EXPECT_TRUE(ECCR_reconstruct(n_validators, &out, &data).tag ==
+    EXPECT_TRUE(ECCR_reconstruct(n_validators, &out_2, &data).tag ==
                 NPRSResult_Tag::NPRS_RESULT_OK);
 
-    auto decode_result = encoder.reconstruct(result_data);
+    auto decode_result = encoder.reconstruct(to_decode);
     ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
 
     auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
@@ -200,6 +239,7 @@ TEST(erasure_coding, Cpp_MathNextHighPow2) {
 
 TEST(erasure_coding, Cpp_MathNextLowPow2) {
   ASSERT_EQ(1ull, ec_cpp::math::nextLowPowerOf2(0ull));
+  ASSERT_EQ(1ull, ec_cpp::math::nextLowPowerOf2(1ull));
   ASSERT_EQ(4ull, ec_cpp::math::nextLowPowerOf2(4ull));
   ASSERT_EQ(4ull, ec_cpp::math::nextLowPowerOf2(5ull));
   ASSERT_EQ(4ull, ec_cpp::math::nextLowPowerOf2(7ull));

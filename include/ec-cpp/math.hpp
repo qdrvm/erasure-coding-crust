@@ -31,7 +31,7 @@ inline size_t nextHighPowerOf2(size_t k) {
 }
 
 inline size_t nextLowPowerOf2(size_t k) {
-  const auto p = k == 0ull ? 0ull : 64ull - __builtin_clzll(k >> 1ull);
+  const auto p = k <= 1ull ? 0ull : 64ull - __builtin_clzll(k >> 1ull);
   return (1ull << p);
 }
 
