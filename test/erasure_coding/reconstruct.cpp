@@ -47,7 +47,8 @@ TEST(erasure_coding, Cpp_Create) {
 
   for (auto const &t : test) {
     ChunksList out{};
-    EXPECT_TRUE(createTestChunks(t, out, 2).tag == NPRSResult_Tag::NPRS_RESULT_OK);
+    EXPECT_TRUE(createTestChunks(t, out, 2).tag ==
+                NPRSResult_Tag::NPRS_RESULT_OK);
 
     auto enc_create_result = ec_cpp::create(2);
     ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
@@ -171,14 +172,14 @@ TEST(erasure_coding, Cpp_Decode) {
     auto result_data = ec_cpp::resultGetValue(std::move(enc_result));
     ASSERT_EQ(result_data.size(), out.count);
 
-
     /// DECODE
     using Shard = decltype(encoder)::Shard;
     std::vector<Shard> to_decode;
     to_decode.resize(out.count);
     for (size_t ix = 0; ix < out.count; ++ix) {
       auto &chunk = out.data[ix];
-      to_decode[chunk.index] = Shard(chunk.data.array, &chunk.data.array[chunk.data.length]);
+      to_decode[chunk.index] =
+          Shard(chunk.data.array, &chunk.data.array[chunk.data.length]);
     }
 
     ChunksList out_2{};
