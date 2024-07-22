@@ -133,6 +133,16 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     return acc;
   }
 
+	/// Return the computed `n` value.
+	size_t n() const {
+		return n_;
+	}
+
+	/// Return the computed `k` value.
+	size_t k() const {
+		return k_;
+	}
+
 private:
   ReedSolomon(size_t n, size_t k, size_t wanted_n, const TPolyEncoder &poly_enc)
       : n_(n), k_(k), wanted_n_(wanted_n), poly_enc_(poly_enc) {}
