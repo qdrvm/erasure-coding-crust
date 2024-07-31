@@ -133,26 +133,28 @@ template <typename TPolyEncoder> struct ReedSolomon final {
     return acc;
   }
 
-	/// Reconstruct from the set of systematic chunks.
-	/// Systematic chunks are the first `k` chunks, which contain the initial data.
-	///
-	/// Provide a vector containing chunk data. If too few chunks are provided, recovery is not
-	/// possible.
-	/// The result may be padded with zeros. Truncate the output to the expected byte length.
-  Result<std::vector<uint8_t>> reconstruct_from_systematic(const std::vector<Shard> &chunks) {
+  /// Reconstruct from the set of systematic chunks.
+  /// Systematic chunks are the first `k` chunks, which contain the initial
+  /// data.
+  ///
+  /// Provide a vector containing chunk data. If too few chunks are provided,
+  /// recovery is not possible. The result may be padded with zeros. Truncate
+  /// the output to the expected byte length.
+  Result<std::vector<uint8_t>>
+  reconstruct_from_systematic(const std::vector<Shard> &chunks) {
     if (chunks.empty()) {
       return Error::kNeedMoreShards;
     }
     auto &first_shard = chunks[0];
-    
-		if (chunks.size() < k_) {
-			return Error::kNeedMoreShards;
-		}
 
-		const auto shard_len = first_shard.size() / 2;
-		if (shard_len == 0) {
-			return Error::kEmptyShard;
-		}
+    if (chunks.size() < k_) {
+      return Error::kNeedMoreShards;
+    }
+
+    const auto shard_len = first_shard.size() / 2;
+    if (shard_len == 0) {
+      return Error::kEmptyShard;
+    }
 
     for (const auto &c : chunks) {
       const auto length = c.size() / 2;
@@ -161,30 +163,26 @@ template <typename TPolyEncoder> struct ReedSolomon final {
       }
     }
 
-		std::vector<uint8_t> systematic_bytes;
+    std::vector<uint8_t> systematic_bytes;
     systematic_bytes.resize(shard_len * 2 * k_);
 
     uint8_t *ptr = &systematic_bytes[0];
-		for (size_t i = 0; i < shard_len; ++i) {
+    for (size_t i = 0; i < shard_len; ++i) {
       for (size_t y = 0; y < k_; ++y) {
         const uint8_t *chunk = &chunks[y][i * 2];
         ptr[0] = chunk[0];
         ptr[1] = chunk[1];
         ptr += 2;
       }
-		}
+    }
     return systematic_bytes;
   }
 
-	/// Return the computed `n` value.
-	size_t n() const {
-		return n_;
-	}
+  /// Return the computed `n` value.
+  size_t n() const { return n_; }
 
-	/// Return the computed `k` value.
-	size_t k() const {
-		return k_;
-	}
+  /// Return the computed `k` value.
+  size_t k() const { return k_; }
 
 private:
   ReedSolomon(size_t n, size_t k, size_t wanted_n, const TPolyEncoder &poly_enc)

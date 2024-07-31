@@ -15,7 +15,7 @@ extern "C" {
 
 static constexpr std::string_view test_data =
     "This is a test string. The purpose of it is not allow the evil forces to "
-    "conquer the world!";
+    "conquer the world!!";
 static constexpr uint64_t n_validators = 6ull;
 
 inline size_t Prototype_log2(size_t x) {
@@ -351,7 +351,7 @@ TEST(erasure_coding, ReconstructChunksFromWholeData) {
   EXPECT_TRUE(ECCR_reconstruct(n_validators, &chunks, &data).tag ==
               NPRSResult_Tag::NPRS_RESULT_OK);
 
-  std::string_view result{(char *)data.array, data.length - 1};
+  std::string_view result{(char *)data.array, test_data.size()};
   EXPECT_TRUE(result == test_data);
 
   ECCR_deallocate_chunk_list(&chunks);
@@ -372,7 +372,7 @@ TEST(erasure_coding, Reconstruct1_3) {
   EXPECT_TRUE(ECCR_reconstruct(n_validators, &chunks_2, &data).tag ==
               NPRSResult_Tag::NPRS_RESULT_OK);
 
-  std::string_view result{(char *)data.array, data.length - 1};
+  std::string_view result{(char *)data.array, test_data.size()};
   EXPECT_TRUE(result == test_data);
 
   ECCR_deallocate_chunk_list(&chunks);
@@ -396,8 +396,6 @@ TEST(erasure_coding, Cpp_Reconstruct1_3) {
   ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
 
   auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
-  ASSERT_EQ(test_data.size(), decoded.size() - 1ull);
-
   for (size_t i = 0; i < test_data.size(); ++i)
     ASSERT_EQ(test_data[i], decoded[i]);
 }
@@ -459,8 +457,6 @@ TEST(erasure_coding, Cpp_Reconstruct1_3_Border) {
   ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
 
   auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
-  ASSERT_EQ(test_data.size(), decoded.size() - 1ull);
-
   for (size_t i = 0; i < test_data.size(); ++i)
     ASSERT_EQ(test_data[i], decoded[i]);
 }
@@ -478,7 +474,7 @@ TEST(erasure_coding, Reconstruct1_3_last_one) {
   EXPECT_TRUE(ECCR_reconstruct(n_validators, &chunks_2, &data).tag ==
               NPRSResult_Tag::NPRS_RESULT_OK);
 
-  std::string_view result{(char *)data.array, data.length - 1};
+  std::string_view result{(char *)data.array, test_data.size()};
   EXPECT_TRUE(result == test_data);
 
   ECCR_deallocate_chunk_list(&chunks);
@@ -543,5 +539,126 @@ TEST(erasure_coding, Cpp_Decode_Big) {
 
   for (size_t i = 0; i < data_out.length; ++i) {
     ASSERT_EQ(data_out.array[i], decoded[i]);
+  }
+}
+
+TEST(erasure_coding, SystematicChuncksRust) {
+  ChunksList chunks{};
+  EXPECT_TRUE(createTestChunks(chunks).tag == NPRSResult_Tag::NPRS_RESULT_OK);
+
+  std::vector<Chunk> tmp;
+  for (size_t ix = 0; ix < n_validators / 3; ++ix) {
+    tmp.push_back(chunks.data[ix]);
+  }
+  ChunksList chunks_2{.data = &tmp.front(), .count = tmp.size()};
+
+  DataBlock data{};
+  EXPECT_TRUE(ECCR_reconstruct(n_validators, &chunks_2, &data).tag ==
+              NPRSResult_Tag::NPRS_RESULT_OK);
+
+  std::string_view result{(char *)data.array, test_data.size()};
+  EXPECT_TRUE(result == test_data);
+
+  DataBlock data2{};
+  EXPECT_TRUE(
+      ECCR_reconstruct_from_systematic(n_validators, &chunks_2, &data2).tag ==
+      NPRSResult_Tag::NPRS_RESULT_OK);
+
+  std::string_view result2{(char *)data2.array, test_data.size()};
+  EXPECT_TRUE(result2 == test_data);
+
+  ECCR_deallocate_chunk_list(&chunks);
+  ECCR_deallocate_data_block(&data);
+  ECCR_deallocate_data_block(&data2);
+}
+
+TEST(erasure_coding, SystematicChuncksRustToCpp) {
+  std::string_view test[]{
+      test_data,
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "l;n4ou98uiqwp2j3mrtlknmeswlkjf p9o87q90p u2p45j243o56u9uyew98fuqw",
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 "
+      "wasioghowerhqht87y450t984y1h5oh243ptgwfhyqa9wyf9 yu9y9r "
+      "239y509y23trhr8247y p1qut59 2914tu520 t589u3t9y7u32w9ty 89qewy923u5 "
+      "h4123hty t90y1982u95yu "
+      "91259oy92y5tr90oweiovfdkljscnvkljasnhiewytr9q8uj5toinh1 ",
+      "1"};
+
+  for (auto const &t : test) {
+    ChunksList chunks{};
+    EXPECT_TRUE(createTestChunks(t, chunks).tag ==
+                NPRSResult_Tag::NPRS_RESULT_OK);
+
+    auto enc_create_result = ec_cpp::create(n_validators);
+    ASSERT_EQ(ec_cpp::resultHasError(enc_create_result), false);
+    auto encoder = ec_cpp::resultGetValue(std::move(enc_create_result));
+
+    using Shard = decltype(encoder)::Shard;
+    std::vector<Shard> to_decode;
+    to_decode.resize(n_validators / 3);
+    for (size_t ix = 0; ix < n_validators / 3; ++ix) {
+      auto &chunk = chunks.data[ix];
+      to_decode[ix] =
+          Shard(chunk.data.array, &chunk.data.array[chunk.data.length]);
+    }
+
+    auto decode_result = encoder.reconstruct_from_systematic(to_decode);
+    ASSERT_FALSE(ec_cpp::resultHasError(decode_result));
+
+    auto decoded = ec_cpp::resultGetValue(std::move(decode_result));
+    for (size_t i = 0; i < t.size(); ++i)
+      ASSERT_EQ(t[i], decoded[i]);
+
+    ECCR_deallocate_chunk_list(&chunks);
   }
 }
