@@ -20,6 +20,7 @@ enum struct Error {
   kNotEnoughValidators,
   kNeedMoreShards,
   kInconsistentShardLengths,
+  kEmptyShard,
 };
 
 template <typename T> using Result = std::variant<T, Error>;

@@ -10,11 +10,11 @@ name = "erasure_coding_crust"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-novelpoly = { package = "reed-solomon-novelpoly", version = "1.0.0" }
+novelpoly = { package = "reed-solomon-novelpoly", version = "2.0.0" }
 
 [dev-dependencies]
-hex-literal = "0.3.1"
-rand = "0.7"
+hex-literal = "0.4.1"
+rand = "0.8.5"
 
 [build-dependencies]
-cbindgen = "0.14.0"
+cbindgen = "0.26.0"
