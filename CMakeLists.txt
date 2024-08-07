@@ -12,8 +12,8 @@ option(BENCHMARK "Enable benchmark" OFF)
 if (TESTING OR BENCHMARK)
   include("cmake/3rdparty/Hunter/init.cmake")
   HunterGate(
-      URL "https://github.com/soramitsu/soramitsu-hunter/archive/v0.23.257-soramitsu18.tar.gz"
-      SHA1 "db065ce74581f07e552e8bae5ef955100caa1a01"
+      URL https://github.com/qdrvm/hunter/archive/refs/tags/v0.25.3-qdrvm19.zip
+      SHA1 eed8b8333c14f25176d4af4fb26256981fd1b527
   )
 endif ()
 

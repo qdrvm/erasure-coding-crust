@@ -266,6 +266,72 @@ pub unsafe extern "C" fn ECCR_obtain_chunks(
     NPRSResult::Ok
 }
 
+/// Reconstruct from the set of systematic chunks.
+/// Systematic chunks are the first `k` chunks, which contain the initial data.
+///
+/// Provide a vector containing chunk data. If too few chunks are provided, recovery is not
+/// possible.
+/// The result may be padded with zeros. Truncate the output to the expected byte length.
+#[allow(unused_attributes)]
+#[no_mangle]
+pub unsafe extern "C" fn ECCR_reconstruct_from_systematic(
+    validators_number: c_ulong,
+    input_chunks: *const ChunksList,
+    outdata: *mut DataBlock,
+) -> NPRSResult {
+    debug_assert!(!outdata.is_null());
+    debug_assert!(!input_chunks.is_null());
+    debug_assert!(!(*input_chunks).data.is_null());
+    debug_assert!(!(*input_chunks).count > 0);
+
+    let n_validators = validators_number as usize;
+    let params = match code_params(n_validators) {
+        Ok(p) => p,
+        Err(e) => return e,
+    };
+    let mut received_shards: Vec<Option<WrappedShard>> = vec![None; params.k()];
+    let chunks = slice::from_raw_parts((*input_chunks).data, (*input_chunks).count as usize);
+    for chunk in chunks.into_iter() {
+        if chunk.index >= params.k() as u64 {
+            continue;
+        }
+
+        received_shards[chunk.index as usize] = Some(WrappedShard::new(
+            slice::from_raw_parts(chunk.data.array, chunk.data.length as usize).to_vec(),
+        ));
+    }
+
+    let was_len = received_shards.len();
+    let shards = received_shards
+        .into_iter()
+        .filter_map(|val| val)
+        .collect::<Vec<_>>();
+
+    if shards.len() != was_len {
+        return NPRSResult::NotEnoughChunks;
+    }
+
+    let mut payload_bytes = match params.make_encoder().reconstruct_from_systematic(shards) {
+        Err(e) => match e {
+            novelpoly::Error::NeedMoreShards { .. } => return NPRSResult::NotEnoughChunks,
+            novelpoly::Error::ParamterMustBePowerOf2 { .. } => return NPRSResult::UnevenLength,
+            novelpoly::Error::WantedShardCountTooHigh(_) => return NPRSResult::TooManyValidators,
+            novelpoly::Error::WantedShardCountTooLow(_) => return NPRSResult::NotEnoughValidators,
+            novelpoly::Error::PayloadSizeIsZero { .. } => return NPRSResult::BadPayload,
+            novelpoly::Error::InconsistentShardLengths { .. } => {
+                return NPRSResult::NonUniformChunks
+            }
+            _ => return NPRSResult::UnknownReconstruction,
+        },
+        Ok(payload_bytes) => payload_bytes,
+    };
+
+    (*outdata).array = payload_bytes.as_mut_ptr();
+    (*outdata).length = payload_bytes.len() as _;
+    std::mem::forget(payload_bytes);
+
+    NPRSResult::Ok
+}
 /// Reconstruct data from a set of chunks.
 ///
 /// Provide an iterator containing chunk data and the corresponding index.
