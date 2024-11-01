@@ -58,7 +58,7 @@ configure_file(cmake/erasure_coding_crustConfig.cmake
   COPYONLY
 )
 
-set(ConfigPackageLocation lib/cmake/erasure_coding_crust)
+set(ConfigPackageLocation ${CMAKE_INSTALL_LIBDIR}/cmake/erasure_coding_crust)
 install(EXPORT erasure_coding_crust_targets
   FILE
     erasure_coding_crustTargets.cmake
