@@ -107,7 +107,7 @@ pub unsafe extern "C" fn ECCR_get_recovery_threshold(
     validators_number: c_ulong,
     threshold_out: *mut c_ulong,
 ) -> NPRSResult {
-    debug_assert!(!threshold_out.is_null());
+    assert!(!threshold_out.is_null());
 
     let n_validators = validators_number as usize;
     match recovery_threshold(n_validators) {
@@ -123,8 +123,8 @@ pub unsafe extern "C" fn ECCR_get_recovery_threshold(
 #[allow(unused_attributes)]
 #[no_mangle]
 pub unsafe extern "C" fn ECCR_deallocate_data_block(data: *mut DataBlock) {
-    debug_assert!(!data.is_null());
-    debug_assert!(!(*data).array.is_null());
+    assert!(!data.is_null());
+    assert!(!(*data).array.is_null());
     drop(Box::from_raw((*data).array));
 }
 
@@ -132,7 +132,7 @@ pub unsafe extern "C" fn ECCR_deallocate_data_block(data: *mut DataBlock) {
 #[allow(unused_attributes)]
 #[no_mangle]
 pub unsafe extern "C" fn ECCR_deallocate_chunk(data: *mut Chunk) {
-    debug_assert!(!data.is_null());
+    assert!(!data.is_null());
     ECCR_deallocate_data_block(&mut (*data).data);
 }
 
@@ -140,8 +140,8 @@ pub unsafe extern "C" fn ECCR_deallocate_chunk(data: *mut Chunk) {
 #[allow(unused_attributes)]
 #[no_mangle]
 pub unsafe extern "C" fn ECCR_deallocate_chunk_list(chunk_list: *mut ChunksList) {
-    debug_assert!(!chunk_list.is_null());
-    debug_assert!(!(*chunk_list).data.is_null());
+    assert!(!chunk_list.is_null());
+    assert!(!(*chunk_list).data.is_null());
     let data = std::mem::transmute::<*mut ChunksList, &mut ChunksList>(chunk_list);
     {
         let chunks = slice::from_raw_parts_mut(data.data, data.count as usize);
@@ -226,10 +226,10 @@ pub unsafe extern "C" fn ECCR_obtain_chunks(
     message: *const DataBlock,
     output: *mut ChunksList,
 ) -> NPRSResult {
-    debug_assert!(!message.is_null());
-    debug_assert!(!output.is_null());
-    debug_assert!(!(*message).array.is_null());
-    debug_assert!(!(*message).length > 0);
+    assert!(!message.is_null());
+    assert!(!output.is_null());
+    assert!(!(*message).array.is_null());
+    assert!(!(*message).length > 0);
 
     let n_validators = validators_number as usize;
     let encoded = slice::from_raw_parts((*message).array, (*message).length as usize);
@@ -279,10 +279,10 @@ pub unsafe extern "C" fn ECCR_reconstruct_from_systematic(
     input_chunks: *const ChunksList,
     outdata: *mut DataBlock,
 ) -> NPRSResult {
-    debug_assert!(!outdata.is_null());
-    debug_assert!(!input_chunks.is_null());
-    debug_assert!(!(*input_chunks).data.is_null());
-    debug_assert!(!(*input_chunks).count > 0);
+    assert!(!outdata.is_null());
+    assert!(!input_chunks.is_null());
+    assert!(!(*input_chunks).data.is_null());
+    assert!(!(*input_chunks).count > 0);
 
     let n_validators = validators_number as usize;
     let params = match code_params(n_validators) {
@@ -346,10 +346,10 @@ pub unsafe extern "C" fn ECCR_reconstruct(
     input_chunks: *const ChunksList,
     outdata: *mut DataBlock,
 ) -> NPRSResult {
-    debug_assert!(!outdata.is_null());
-    debug_assert!(!input_chunks.is_null());
-    debug_assert!(!(*input_chunks).data.is_null());
-    debug_assert!(!(*input_chunks).count > 0);
+    assert!(!outdata.is_null());
+    assert!(!input_chunks.is_null());
+    assert!(!(*input_chunks).data.is_null());
+    assert!(!(*input_chunks).count > 0);
 
     let n_validators = validators_number as usize;
     let params = match code_params(n_validators) {
