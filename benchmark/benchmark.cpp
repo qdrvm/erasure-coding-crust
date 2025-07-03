@@ -66,7 +66,7 @@ void Cpp_Measures() {
       std::chrono::microseconds measured_dec{};
 
       for (size_t i = 0ull; i < kMeasureCount; ++i) {
-        uint64_t enc_time, dec_time;
+        size_t enc_time, dec_time;
         DataBlock data{.array = (uint8_t *)t.data(), .length = t.size()};
         ECCR_Test_MeasurePerformance(&data, n_validators, &enc_time, &dec_time);
 
